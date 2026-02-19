@@ -92,3 +92,15 @@
     opacity: 0;
   }
 }
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .spotlight-glow {
+    animation: none;
+  }
+
+  .particle {
+    animation: none;
+    opacity: 0;
+  }
+}

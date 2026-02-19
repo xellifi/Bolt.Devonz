@@ -133,3 +133,14 @@
     font-size: clamp(3rem, 15vw, 5rem);
   }
 }
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .liquid-metal-text {
+    animation: none;
+  }
+
+  .liquid-metal-text::before {
+    animation: none;
+  }
+}

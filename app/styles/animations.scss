@@ -47,3 +47,16 @@
     transform: translateY(6px);
   }
 }
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animated {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .dropdown-animation {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
