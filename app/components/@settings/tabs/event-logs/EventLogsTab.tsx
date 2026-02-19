@@ -140,15 +140,15 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 text-xs text-bolt-elements-textTertiary">
             <span>Model: {details.model}</span>
-            <span>•</span>
+            <span>-</span>
             <span>Tokens: {details.totalTokens}</span>
-            <span>•</span>
+            <span>-</span>
             <span>Duration: {details.duration}ms</span>
           </div>
           {details.prompt && (
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-bolt-elements-textPrimary">Prompt:</div>
-              <pre className="text-xs text-bolt-elements-textSecondary bg-bolt-elements-bg-depth-2 rounded p-2 whitespace-pre-wrap">
+              <pre className="text-xs text-bolt-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-bolt-elements-borderColor" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
                 {details.prompt}
               </pre>
             </div>
@@ -156,7 +156,7 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
           {details.response && (
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-bolt-elements-textPrimary">Response:</div>
-              <pre className="text-xs text-bolt-elements-textSecondary bg-bolt-elements-bg-depth-2 rounded p-2 whitespace-pre-wrap">
+              <pre className="text-xs text-bolt-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-bolt-elements-borderColor" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
                 {details.response}
               </pre>
             </div>
@@ -170,16 +170,16 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 text-xs text-bolt-elements-textTertiary">
             <span className={details.method === 'GET' ? 'text-green-500' : 'text-blue-500'}>{details.method}</span>
-            <span>•</span>
+            <span>-</span>
             <span>Status: {details.statusCode}</span>
-            <span>•</span>
+            <span>-</span>
             <span>Duration: {details.duration}ms</span>
           </div>
           <div className="text-xs text-bolt-elements-textSecondary break-all">{details.url}</div>
           {details.request && (
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-bolt-elements-textPrimary">Request:</div>
-              <pre className="text-xs text-bolt-elements-textSecondary bg-bolt-elements-bg-depth-2 rounded p-2 whitespace-pre-wrap">
+              <pre className="text-xs text-bolt-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-bolt-elements-borderColor" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
                 {JSON.stringify(details.request, null, 2)}
               </pre>
             </div>
@@ -187,7 +187,7 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
           {details.response && (
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-bolt-elements-textPrimary">Response:</div>
-              <pre className="text-xs text-bolt-elements-textSecondary bg-bolt-elements-bg-depth-2 rounded p-2 whitespace-pre-wrap">
+              <pre className="text-xs text-bolt-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-bolt-elements-borderColor" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
                 {JSON.stringify(details.response, null, 2)}
               </pre>
             </div>
@@ -195,7 +195,7 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
           {details.error && (
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-red-500">Error:</div>
-              <pre className="text-xs text-red-400 bg-red-50 dark:bg-red-500/10 rounded p-2 whitespace-pre-wrap">
+              <pre className="text-xs text-red-400 bg-red-500/10 rounded p-2 whitespace-pre-wrap border-l-2 border-red-500/30">
                 {JSON.stringify(details.error, null, 2)}
               </pre>
             </div>
@@ -204,10 +204,30 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
       );
     }
 
+    // Render a clean key-value grid for generic details
+    const entries = Object.entries(details).filter(([, v]) => v !== undefined && v !== null && v !== '');
+
     return (
-      <pre className="text-xs text-bolt-elements-textSecondary bg-bolt-elements-bg-depth-2 rounded whitespace-pre-wrap">
-        {JSON.stringify(details, null, 2)}
-      </pre>
+      <div className="rounded-lg p-3 border-l-2 border-bolt-elements-borderColorActive" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+        <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
+          {entries.map(([key, value]) => {
+            const isObject = typeof value === 'object';
+
+            return (
+              <React.Fragment key={key}>
+                <span className="text-xs text-bolt-elements-textTertiary font-medium whitespace-nowrap">{key}</span>
+                {isObject ? (
+                  <pre className="text-xs text-bolt-elements-textSecondary whitespace-pre-wrap break-all">
+                    {JSON.stringify(value, null, 2)}
+                  </pre>
+                ) : (
+                  <span className="text-xs text-bolt-elements-textSecondary break-all">{String(value)}</span>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
     );
   };
 
@@ -233,8 +253,9 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
               <>
                 <button
                   onClick={() => setLocalExpanded(!localExpanded)}
-                  className="text-xs text-bolt-elements-textTertiary hover:text-bolt-elements-item-contentAccent transition-colors"
+                  className="inline-flex items-center gap-1 text-xs text-bolt-elements-item-contentAccent hover:underline transition-colors w-fit"
                 >
+                  <span className={classNames('text-sm transition-transform', localExpanded ? 'i-ph:caret-down' : 'i-ph:caret-right')} />
                   {localExpanded ? 'Hide' : 'Show'} Details
                 </button>
                 {localExpanded && renderDetails(log.details as Record<string, React.ReactNode>)}
@@ -245,7 +266,7 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
                 {log.level}
               </div>
               {log.category && (
-                <div className="px-2 py-0.5 rounded-full text-xs bg-bolt-elements-bg-depth-2 text-bolt-elements-textTertiary">
+                <div className="px-2 py-0.5 rounded-full text-xs text-bolt-elements-textTertiary border border-bolt-elements-borderColor">
                   {log.category}
                 </div>
               )}
