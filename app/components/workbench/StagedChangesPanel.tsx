@@ -610,7 +610,10 @@ export const StagedChangesPanel = memo(() => {
 
   return (
     <Collapsible.Root open={isOpen} onOpenChange={setIsOpen}>
-      <div className="border-b border-bolt-elements-borderColor" style={{ background: 'var(--bolt-elements-bg-depth-1)' }}>
+      <div
+        className="border-b border-bolt-elements-borderColor"
+        style={{ background: 'var(--bolt-elements-bg-depth-1)' }}
+      >
         {/* Header */}
         <Collapsible.Trigger asChild>
           <button className="w-full flex items-center justify-between px-4 py-3 bg-bolt-elements-background-depth-2 hover:bg-bolt-elements-background-depth-3 transition-colors">

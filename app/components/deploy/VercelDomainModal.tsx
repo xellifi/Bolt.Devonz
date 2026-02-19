@@ -166,7 +166,10 @@ export function VercelDomainModal({ isOpen, onClose, projectId: propProjectId, c
                       </svg>
                     </div>
                     <div>
-                      <RadixDialog.Title className="text-lg font-semibold" style={{ color: 'var(--bolt-elements-textPrimary)' }}>
+                      <RadixDialog.Title
+                        className="text-lg font-semibold"
+                        style={{ color: 'var(--bolt-elements-textPrimary)' }}
+                      >
                         Domain Settings
                       </RadixDialog.Title>
                       <RadixDialog.Description

@@ -30,7 +30,7 @@ import { MCPService } from './mcpService';
 // Helper to create a fresh MCPService instance for isolated tests
 function createFreshMCPService(): MCPService {
   // Access private constructor workaround: reset singleton
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   (MCPService as any)._instance = undefined;
   return MCPService.getInstance();
 }
@@ -74,7 +74,6 @@ describe('MCPService', () => {
     it('should create a new instance after reset', () => {
       const instance1 = MCPService.getInstance();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (MCPService as any)._instance = undefined;
 
       const instance2 = MCPService.getInstance();
@@ -95,7 +94,6 @@ describe('MCPService', () => {
         execute: vi.fn(),
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._tools = { 'test-tool': mockTool };
       expect(service.isValidToolName('test-tool')).toBe(true);
     });
@@ -109,7 +107,6 @@ describe('MCPService', () => {
         execute: vi.fn(),
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._toolsWithoutExecute = { 'test-tool': { ...mockTool, execute: undefined } };
 
       const tools = service.toolsWithoutExecute;
@@ -131,13 +128,10 @@ describe('MCPService', () => {
         parameters: { jsonSchema: { type: 'object', properties: {} } },
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._tools = { 'my-tool': mockTool };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._toolsWithoutExecute = { 'my-tool': { ...mockTool, execute: undefined } };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._toolNamesToServerNames.set('my-tool', 'test-server');
 
       service.processToolCall(
@@ -172,13 +166,10 @@ describe('MCPService', () => {
         parameters: { jsonSchema: { type: 'object', properties: {} } },
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._tools = { 'no-desc-tool': mockTool };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._toolsWithoutExecute = { 'no-desc-tool': { ...mockTool, execute: undefined } };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._toolNamesToServerNames.set('no-desc-tool', 'server-a');
 
       service.processToolCall(
@@ -202,13 +193,10 @@ describe('MCPService', () => {
         execute: executeFn,
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._tools = { [toolName]: mockTool };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._toolsWithoutExecute = { [toolName]: { ...mockTool, execute: undefined } };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._toolNamesToServerNames.set(toolName, 'test-server');
     }
 
@@ -333,10 +321,8 @@ describe('MCPService', () => {
         parameters: { jsonSchema: { type: 'object', properties: {} } },
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._tools = { 'no-exec-tool': mockTool };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._toolNamesToServerNames.set('no-exec-tool', 'test-server');
 
       const messages: Message[] = [
@@ -457,13 +443,10 @@ describe('MCPService', () => {
         },
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._tools = mockTools;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._toolNamesToServerNames.set('tool-a', 'server-1');
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._toolNamesToServerNames.set('tool-b', 'server-1');
 
       const messages: Message[] = [
@@ -505,7 +488,6 @@ describe('MCPService', () => {
 
   describe('_validateServerConfig (via updateConfig)', () => {
     it('should validate stdio config with command', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validate = (service as any)._validateServerConfig.bind(service);
 
       const config = validate('test', { command: 'npx', args: ['-y', 'some-server'] });
@@ -514,7 +496,6 @@ describe('MCPService', () => {
     });
 
     it('should validate streamable-http config', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validate = (service as any)._validateServerConfig.bind(service);
 
       const config = validate('test', { type: 'streamable-http', url: 'https://example.com/mcp' });
@@ -523,7 +504,6 @@ describe('MCPService', () => {
     });
 
     it('should validate sse config', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validate = (service as any)._validateServerConfig.bind(service);
 
       const config = validate('test', { type: 'sse', url: 'http://localhost:8000/sse' });
@@ -531,7 +511,6 @@ describe('MCPService', () => {
     });
 
     it('should throw for config with both command and url', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validate = (service as any)._validateServerConfig.bind(service);
 
       expect(() => validate('test', { command: 'npx', url: 'http://localhost' })).toThrow(
@@ -540,35 +519,32 @@ describe('MCPService', () => {
     });
 
     it('should throw for url config without type', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validate = (service as any)._validateServerConfig.bind(service);
 
       expect(() => validate('test', { url: 'http://localhost:3000' })).toThrow('missing "type" field');
     });
 
     it('should throw for invalid type', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validate = (service as any)._validateServerConfig.bind(service);
 
-      expect(() => validate('test', { type: 'websocket', url: 'ws://localhost' })).toThrow('provided "type" is invalid');
+      expect(() => validate('test', { type: 'websocket', url: 'ws://localhost' })).toThrow(
+        'provided "type" is invalid',
+      );
     });
 
     it('should throw for stdio type without command', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validate = (service as any)._validateServerConfig.bind(service);
 
       expect(() => validate('test', { type: 'stdio' })).toThrow('missing "command" field');
     });
 
     it('should throw for sse type without url', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validate = (service as any)._validateServerConfig.bind(service);
 
       expect(() => validate('test', { type: 'sse' })).toThrow('missing "url" field');
     });
 
     it('should throw for streamable-http type without url', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const validate = (service as any)._validateServerConfig.bind(service);
 
       expect(() => validate('test', { type: 'streamable-http' })).toThrow('missing "url" field');
@@ -583,7 +559,6 @@ describe('MCPService', () => {
         execute: vi.fn(),
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._registerTools('server-1', { 'my-tool': mockTool } as unknown as ToolSet);
 
       expect(service.tools['my-tool']).toBeDefined();
@@ -599,10 +574,8 @@ describe('MCPService', () => {
         execute: vi.fn(),
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._registerTools('my-server', { 'my-tool': mockTool } as unknown as ToolSet);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((service as any)._toolNamesToServerNames.get('my-tool')).toBe('my-server');
     });
 
@@ -618,16 +591,13 @@ describe('MCPService', () => {
         execute: vi.fn(),
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._registerTools('server-1', { 'shared-tool': tool1 } as unknown as ToolSet);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._registerTools('server-2', { 'shared-tool': tool2 } as unknown as ToolSet);
 
       // Tool should now be from server-2
       expect(service.tools['shared-tool'].execute).toBe(tool2.execute);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((service as any)._toolNamesToServerNames.get('shared-tool')).toBe('server-2');
     });
   });
@@ -635,7 +605,6 @@ describe('MCPService', () => {
   describe('schema sanitization (_sanitizeJsonSchema)', () => {
     // Helper to access the private method
     function sanitize(schema: Record<string, unknown>): Record<string, unknown> {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (service as any)._sanitizeJsonSchema(schema);
     }
 
@@ -792,9 +761,8 @@ describe('MCPService', () => {
     });
 
     it('should handle null/undefined input gracefully', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect(sanitize(null as any)).toBeNull();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       expect(sanitize(undefined as any)).toBeUndefined();
     });
 
@@ -817,10 +785,9 @@ describe('MCPService', () => {
         execute: vi.fn(),
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (service as any)._registerTools('deepwiki', { ask_question: mockTool } as unknown as ToolSet);
 
-      const registered = service.toolsWithoutExecute['ask_question'];
+      const registered = service.toolsWithoutExecute.ask_question;
       expect(registered).toBeDefined();
 
       const schema = (registered.parameters as { jsonSchema: Record<string, unknown> }).jsonSchema;

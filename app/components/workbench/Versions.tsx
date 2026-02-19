@@ -50,14 +50,23 @@ const VersionCard = memo(({ version, onRestore, onRevert }: VersionCardProps) =>
           {/* Version ID badge */}
           <span
             className="px-2 py-0.5 rounded text-xs font-mono"
-            style={{ background: 'var(--bolt-elements-button-secondary-background)', color: 'var(--bolt-elements-textSecondary)' }}
+            style={{
+              background: 'var(--bolt-elements-button-secondary-background)',
+              color: 'var(--bolt-elements-textSecondary)',
+            }}
           >
             {version.id}
           </span>
 
           {/* Latest badge */}
           {version.isLatest && (
-            <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ background: 'var(--bolt-elements-button-primary-background)', color: 'var(--bolt-elements-button-primary-text)' }}>
+            <span
+              className="px-2 py-0.5 rounded text-xs font-medium"
+              style={{
+                background: 'var(--bolt-elements-button-primary-background)',
+                color: 'var(--bolt-elements-button-primary-text)',
+              }}
+            >
               Latest
             </span>
           )}
@@ -162,7 +171,9 @@ export const Versions = memo(() => {
             {filteredVersions.length} of {allVersions.length}
           </span>
         </div>
-        <p className="text-sm text-bolt-elements-textTertiary mb-4">View and restore previous versions of your project.</p>
+        <p className="text-sm text-bolt-elements-textTertiary mb-4">
+          View and restore previous versions of your project.
+        </p>
 
         {/* Search */}
         <div className="relative">

@@ -96,4 +96,3 @@ export const action = withSecurity(supabaseQueryAction, {
   allowedMethods: ['POST'],
   rateLimit: false,
 });
-

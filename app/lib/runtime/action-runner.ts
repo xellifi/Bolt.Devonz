@@ -171,7 +171,9 @@ export class ActionRunner {
       status: data.action.type === 'start' ? 'running' : 'complete',
       executed: true,
       messageId,
-      abort: () => {},
+      abort: () => {
+        /* no-op: restored actions don't need abort */
+      },
       abortSignal: new AbortController().signal,
     });
   }

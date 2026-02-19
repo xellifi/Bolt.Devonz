@@ -401,11 +401,7 @@ export const CombinedModelSelector = ({
         >
           {/* Provider Section */}
           <div
-            className={classNames(
-              'flex items-center gap-2 px-4 py-2.5',
-              'bg-[#0b0d13]',
-              'border-r border-white/12',
-            )}
+            className={classNames('flex items-center gap-2 px-4 py-2.5', 'bg-[#0b0d13]', 'border-r border-white/12')}
             onClick={(e) => {
               e.stopPropagation();
               setIsDropdownOpen(true);
@@ -427,9 +423,7 @@ export const CombinedModelSelector = ({
           >
             <div className="flex items-center gap-2 min-w-0">
               <span className="i-ph:brain-duotone text-[#6b8bb8] text-lg flex-shrink-0" />
-              <span className="text-sm text-[#e6edf3] truncate">
-                {selectedModel?.label || 'Select model'}
-              </span>
+              <span className="text-sm text-[#e6edf3] truncate">{selectedModel?.label || 'Select model'}</span>
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               {modelLoading && <div className="i-svg-spinners:90-ring-with-bg text-[#6b8bb8] text-sm animate-spin" />}
@@ -603,9 +597,7 @@ export const CombinedModelSelector = ({
                     ? `No ${activeSection}s match "${debouncedSearchQuery}"`
                     : `No ${activeSection}s found`}
                 </div>
-                {debouncedSearchQuery && (
-                  <div className="text-xs text-[#6e7681]">Try a different search term</div>
-                )}
+                {debouncedSearchQuery && <div className="text-xs text-[#6e7681]">Try a different search term</div>}
               </div>
             ) : activeSection === 'provider' ? (
               filteredProviders.map((p, index) => (
@@ -617,9 +609,7 @@ export const CombinedModelSelector = ({
                   className={classNames(
                     'px-4 py-3 cursor-pointer transition-all',
                     'flex items-center gap-3',
-                    provider?.name === p.name
-                      ? 'bg-[#1e3a5f]/20 text-[#8badd4]'
-                      : 'text-[#e6edf3] hover:bg-[#1a2332]',
+                    provider?.name === p.name ? 'bg-[#1e3a5f]/20 text-[#8badd4]' : 'text-[#e6edf3] hover:bg-[#1a2332]',
                     focusedIndex === index ? 'ring-1 ring-inset ring-[#4d6a8f]/50 bg-[#1a2332]' : '',
                   )}
                   onClick={(e) => {
@@ -657,9 +647,7 @@ export const CombinedModelSelector = ({
                   aria-selected={model === m.name}
                   className={classNames(
                     'px-4 py-3 cursor-pointer transition-all',
-                    model === m.name
-                      ? 'bg-[#1e3a5f]/20 text-[#8badd4]'
-                      : 'text-[#e6edf3] hover:bg-[#1a2332]',
+                    model === m.name ? 'bg-[#1e3a5f]/20 text-[#8badd4]' : 'text-[#e6edf3] hover:bg-[#1a2332]',
                     focusedIndex === index ? 'ring-1 ring-inset ring-[#4d6a8f]/50 bg-[#1a2332]' : '',
                   )}
                   onClick={(e) => {

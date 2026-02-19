@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 
 /**
  * LLMManager is a singleton with private constructor, so we test it
@@ -7,7 +7,6 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 // We need to access the private static _instance to reset. Use a hack:
 function resetLLMManagerSingleton() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (LLMManager as any)._instance = undefined;
 }
 
@@ -27,12 +26,7 @@ class MockProvider extends BaseProvider {
   config: ProviderConfig;
   private _dynamicModels?: ModelInfo[];
 
-  constructor(
-    name: string,
-    staticModels: ModelInfo[] = [],
-    config: ProviderConfig = {},
-    dynamicModels?: ModelInfo[],
-  ) {
+  constructor(name: string, staticModels: ModelInfo[] = [], config: ProviderConfig = {}, dynamicModels?: ModelInfo[]) {
     super();
     this.name = name;
     this.staticModels = staticModels;
@@ -44,31 +38,8 @@ class MockProvider extends BaseProvider {
     throw new Error('Not implemented in test');
   }
 
-  getDynamicModels = this._dynamicModels
-    ? async () => this._dynamicModels!
-    : undefined;
+  getDynamicModels = this._dynamicModels ? async () => this._dynamicModels! : undefined;
 }
-
-const mockStaticModel: ModelInfo = {
-  name: 'mock-model-1',
-  label: 'Mock Model 1',
-  provider: 'MockProvider',
-  maxTokenAllowed: 4096,
-};
-
-const mockStaticModel2: ModelInfo = {
-  name: 'mock-model-2',
-  label: 'Mock Model 2',
-  provider: 'MockProvider2',
-  maxTokenAllowed: 8192,
-};
-
-const mockDynamicModel: ModelInfo = {
-  name: 'dynamic-model-1',
-  label: 'Dynamic Model 1',
-  provider: 'DynamicProvider',
-  maxTokenAllowed: 16384,
-};
 
 describe('LLMManager', () => {
   beforeEach(() => {
@@ -195,9 +166,7 @@ describe('LLMManager', () => {
       const manager = LLMManager.getInstance();
       const fakeProvider = new MockProvider('FakeProvider');
 
-      expect(() => manager.getStaticModelListFromProvider(fakeProvider)).toThrow(
-        'Provider FakeProvider not found',
-      );
+      expect(() => manager.getStaticModelListFromProvider(fakeProvider)).toThrow('Provider FakeProvider not found');
     });
   });
 
@@ -267,9 +236,9 @@ describe('LLMManager', () => {
       const manager = LLMManager.getInstance();
       const fake = new MockProvider('NotRegistered');
 
-      await expect(
-        manager.getModelListFromProvider(fake, { apiKeys: {}, serverEnv: {} as Env }),
-      ).rejects.toThrow('Provider NotRegistered not found');
+      await expect(manager.getModelListFromProvider(fake, { apiKeys: {}, serverEnv: {} as Env })).rejects.toThrow(
+        'Provider NotRegistered not found',
+      );
     });
 
     it('should return static models for provider without dynamic models', async () => {

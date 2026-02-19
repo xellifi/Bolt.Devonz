@@ -54,7 +54,7 @@ export function WebSearch({ onSearchResult, disabled }: WebSearchProps) {
 
   useEffect(() => {
     if (!isOpen) {
-      return;
+      return undefined;
     }
 
     const handleClickOutside = (event: MouseEvent) => {
