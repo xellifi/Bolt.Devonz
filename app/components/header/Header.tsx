@@ -24,9 +24,11 @@ export function Header() {
           <button
             type="button"
             aria-label="Open sidebar"
-            className="i-ph:sidebar-simple text-xl text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors bg-transparent border-none p-0"
+            className="flex items-center justify-center bg-transparent border-none p-1 cursor-pointer"
             onClick={() => sidebarStore.toggle()}
-          />
+          >
+            <div className="i-ph:sidebar-simple text-xl text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors" />
+          </button>
         )}
       </div>
       {chat.started && (
