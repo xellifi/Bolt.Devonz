@@ -27,6 +27,8 @@ className = 'bg-[#1a1a1a]';
 
 ## Color Palette (Dark Theme)
 
+### Neutral Dark (Generic Components)
+
 | Element               | Color     | Usage                      |
 | --------------------- | --------- | -------------------------- |
 | Background (deep)     | `#0a0a0a` | Deepest background         |
@@ -39,6 +41,20 @@ className = 'bg-[#1a1a1a]';
 | Text (secondary)      | `#9ca3af` | Body text, labels          |
 | Text (muted)          | `#6b7280` | Placeholder, hints         |
 | Accent                | `#a855f7` | Purple accent (purple-500) |
+
+### Blue-Tinted Dark (Page & Popover Theme)
+
+The main page body and floating UI (popovers, dropdowns) use blue-tinted dark colors for a cohesive feel:
+
+| Element               | Color     | Usage                      |
+| --------------------- | --------- | -------------------------- |
+| Page background       | `#0b0d13` | Body / root background     |
+| Popover / dropdown bg | `#0f1219` | Floating panel backgrounds |
+| Hover (blue-tinted)   | `#1a1f2e` | Hover states in popovers   |
+| Border (blue-tinted)  | `#1e293b` | Borders on floating panels |
+| Shadow (floating)     | `rgba(0,0,0,0.6)` | Deep drop shadow for depth |
+
+> **Important**: Browser default `<button>` backgrounds are gray. Always add `bg-transparent` or `border-none bg-transparent` to custom buttons in dark popovers.
 
 ## Component Patterns
 

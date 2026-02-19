@@ -138,7 +138,7 @@ describe('MyComponent', () => {
 });
 ```
 
-The project currently has 511 tests across 25 test files.
+The project currently has 537 tests across 27 test files.
 
 Recent test expansion areas include:
 

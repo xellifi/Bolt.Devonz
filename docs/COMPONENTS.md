@@ -20,7 +20,7 @@ The primary user interaction surface. Handles message display, input, file uploa
 | --------- | ------- |
 | `Chat.client.tsx` | Top-level chat controller (client-only, wraps AI SDK `useChat`) |
 | `BaseChat.tsx` | Layout and props interface for the chat UI |
-| `ChatBox.tsx` | Message input area with toolbar |
+| `ChatBox.tsx` | Message input area with toolbar and mode selector |
 | `Messages.client.tsx` | Message list renderer |
 | `UserMessage.tsx` | User message bubble |
 | `AssistantMessage.tsx` | AI response bubble |
@@ -43,7 +43,8 @@ The primary user interaction surface. Handles message display, input, file uploa
 | `ChatAlert.tsx` | Chat error/warning alerts |
 | `LLMApiAlert.tsx` | LLM API error alerts |
 | `SupabaseAlert.tsx` | Supabase connection alerts |
-| `PlanApprovalAlert.tsx` | Plan approval UI |
+| `ChatModeSelector.tsx` | Unified Build/Plan/Discuss mode selector (Radix Popover) — replaces separate Plan and Discuss toggles |
+| `PlanApprovalAlert.tsx` | ~~Plan approval UI~~ — **deprecated**, no longer imported (dead code) |
 | `DicussMode.tsx` | Discuss (non-coding) mode |
 | `MCPTools.tsx` | MCP tools indicator in the chat toolbar; MCP tool selection |
 | `chatExportAndImport/` | Chat export/import functionality |

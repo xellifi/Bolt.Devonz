@@ -193,6 +193,7 @@ All hooks live in `app/lib/hooks/`. They often wrap store access or provide data
 | `useSupabaseConnection` | Supabase connection state |
 | `useViewport` | Responsive breakpoint detection |
 | `useVersionCheck` | Polls `/api/version-check` to detect available updates, drives `UpdateBanner` |
+| `usePlanSync` | Syncs PLAN.md file changes from WebContainer into the plan store, preserving user approval state |
 
 ---
 

@@ -27,8 +27,10 @@
 - **MCP Schema Sanitization** — Automatic schema compatibility for Google Gemini (strips unsupported constructs)
 - **MCP Auto-Approve** — Per-server auto-approve toggle for trusted MCP servers
 - **Formatted Tool Results** — MCP tool results render as formatted markdown instead of raw JSON
+- **Unified Mode Selector** — Single Build/Plan/Discuss dropdown replaces separate toggles
+- **Auto-Collapse Plan** — Plan panel auto-collapses when all tasks reach 100%
 - **Security Hardening** — `withSecurity()` on all 35+ API routes with input validation, rate limiting options, URL allowlisting
-- **511 Tests** — Across 25 test files for comprehensive coverage
+- **537 Tests** — Across 27 test files for comprehensive coverage
 - **Z.ai Provider** — Integration with 10 static GLM models optimized for coding tasks
 
 ---
@@ -42,7 +44,7 @@
 | Language | TypeScript (strict) |
 | Styling | UnoCSS + SCSS + Radix UI |
 | State | Nanostores |
-| AI/LLM | Vercel AI SDK v4.3 (20 providers) |
+| AI/LLM | Vercel AI SDK v4.3 (22 providers) |
 | Editor | CodeMirror 6 |
 | Terminal | xterm.js 5.5 |
 | Runtime | WebContainer API |
