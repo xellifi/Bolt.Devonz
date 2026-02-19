@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { vercelConnection } from '~/lib/stores/vercel';
 import { DeployButton } from '~/components/deploy/DeployButton';
-import { VercelDomainModal } from '~/components/deploy/VercelDomainModal';
+
+const VercelDomainModal = lazy(() =>
+  import('~/components/deploy/VercelDomainModal').then((m) => ({ default: m.VercelDomainModal })),
+);
 import { HeaderAvatar } from './HeaderAvatar.client';
 import { AutoFixStatus } from './AutoFixStatus.client';
 import { chatId } from '~/lib/persistence/useChatHistory';
@@ -77,7 +80,11 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
       <HeaderAvatar />
 
       {/* Vercel Domain Modal */}
-      <VercelDomainModal isOpen={isVercelModalOpen} onClose={() => setIsVercelModalOpen(false)} />
+      {isVercelModalOpen && (
+        <Suspense>
+          <VercelDomainModal isOpen={isVercelModalOpen} onClose={() => setIsVercelModalOpen(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }
