@@ -83,17 +83,25 @@ export const getFineTunedPrompt = (
   When users request 3D elements, interactive 3D scenes, moving objects, 3D animations,
   or any Three.js-related functionality:
 
-  ALWAYS prefer React Three Fiber (@react-three/fiber) and its ecosystem:
-    - @react-three/fiber — Core React renderer for Three.js
-    - @react-three/drei — Useful helpers, controls, abstractions
-    - @react-three/postprocessing — Post-processing effects (bloom, vignette, etc.)
+  ALWAYS prefer React Three Fiber (@react-three/fiber) and its ecosystem.
+  CRITICAL: Use these EXACT package versions — do NOT invent version numbers:
+    - three@^0.183.0 — Three.js core (ALWAYS include as dependency)
+    - @react-three/fiber@^9.5.0 — Core React renderer for Three.js
+    - @react-three/drei@^10.7.7 — Useful helpers, controls, abstractions
+    - @react-three/postprocessing@^3.0.4 — Post-processing effects (bloom, vignette, etc.)
     - @react-three/rapier — Physics engine integration
+    - react-error-boundary@^5.0.0 — Error boundary for graceful 3D fallbacks (ALWAYS include)
+
+  CRITICAL DEPENDENCY RULE: Every package you import in code MUST be in package.json.
+  Before writing ANY import statement, verify the package is listed in dependencies or devDependencies.
+  Install command: npm install three @react-three/fiber @react-three/drei react-error-boundary
 
   R3F Best Practices:
     - Use declarative JSX for the scene graph (<Canvas>, <mesh>, <ambientLight>, etc.)
     - Always wrap 3D content in a <Canvas> component
     - Use React.lazy() + Suspense for 3D scenes to handle loading gracefully
-    - Add an ErrorBoundary around 3D content for fallback rendering
+    - Wrap 3D content in an ErrorBoundary (from react-error-boundary) for graceful fallback
+    - ALWAYS ensure "vite" is in devDependencies when creating Vite projects
     - Reference: https://r3f.docs.pmnd.rs/getting-started/introduction
 
   When R3F is NOT suitable (use alternatives instead):

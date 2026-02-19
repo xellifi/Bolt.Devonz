@@ -321,31 +321,12 @@ export class ActionRunner {
       unreachable('Expected shell action');
     }
 
-    // Check if staging is enabled - queue command instead of running
-    const stagingState = stagingStore.get();
+    // --- Step 1: Validate and transform command content before staging or execution ---
 
-    if (stagingState.settings.isEnabled) {
-      const queued = queueCommand({
-        type: 'shell',
-        command: action.content,
-        artifactId: 'pending-artifact',
-        title: `Shell: ${action.content.substring(0, 40)}${action.content.length > 40 ? '...' : ''}`,
-      });
-
-      if (queued) {
-        logger.info(`Queued shell command for staging: ${action.content.substring(0, 50)}...`);
-      } else {
-        logger.debug(`Skipped duplicate shell command: ${action.content.substring(0, 50)}...`);
-      }
-
+    // Reject obvious non-commands (error messages mistakenly generated as shell actions)
+    if (!this.#isLikelyValidCommand(action.content)) {
+      logger.warn(`Rejected invalid command (appears to be error message): ${action.content.substring(0, 80)}`);
       return;
-    }
-
-    const shell = this.#shellTerminal();
-    await shell.ready();
-
-    if (!shell || !shell.terminal || !shell.process) {
-      unreachable('Shell terminal not found');
     }
 
     // Rewrite unsupported runtime commands (e.g. Python → Node.js) for WebContainer
@@ -368,7 +349,38 @@ export class ActionRunner {
       logger.debug('Injected --legacy-peer-deps into npm install command');
     }
 
-    // Pre-validate command for common issues
+    // --- Step 2: Route to staging or direct execution ---
+
+    // Check if staging is enabled - queue the validated/transformed command
+    const stagingState = stagingStore.get();
+
+    if (stagingState.settings.isEnabled) {
+      const queued = queueCommand({
+        type: 'shell',
+        command: action.content,
+        artifactId: 'pending-artifact',
+        title: `Shell: ${action.content.substring(0, 40)}${action.content.length > 40 ? '...' : ''}`,
+      });
+
+      if (queued) {
+        logger.info(`Queued shell command for staging: ${action.content.substring(0, 50)}...`);
+      } else {
+        logger.debug(`Skipped duplicate shell command: ${action.content.substring(0, 50)}...`);
+      }
+
+      return;
+    }
+
+    // --- Step 3: Direct execution (staging disabled) ---
+
+    const shell = this.#shellTerminal();
+    await shell.ready();
+
+    if (!shell || !shell.terminal || !shell.process) {
+      unreachable('Shell terminal not found');
+    }
+
+    // Pre-validate command for common issues (file existence checks, etc.)
     const validationResult = await this.#validateShellCommand(action.content);
 
     if (validationResult.shouldModify && validationResult.modifiedCommand) {
@@ -396,7 +408,20 @@ export class ActionRunner {
       unreachable('Expected shell action');
     }
 
-    // Check if staging is enabled - queue command instead of running
+    // Reject obvious non-commands (error messages mistakenly generated as start actions)
+    if (!this.#isLikelyValidCommand(action.content)) {
+      logger.warn(`Rejected invalid start command (appears to be error message): ${action.content.substring(0, 80)}`);
+      return undefined;
+    }
+
+    // Rewrite unsupported runtime commands for WebContainer
+    const startRewrite = rewriteUnsupportedCommand(action.content);
+
+    if (startRewrite.wasRewritten) {
+      action.content = startRewrite.command;
+    }
+
+    // Check if staging is enabled - queue the validated/transformed command
     const stagingState = stagingStore.get();
 
     if (stagingState.settings.isEnabled) {
@@ -425,13 +450,6 @@ export class ActionRunner {
 
     if (!shell || !shell.terminal || !shell.process) {
       unreachable('Shell terminal not found');
-    }
-
-    // Rewrite unsupported runtime commands for WebContainer
-    const startRewrite = rewriteUnsupportedCommand(action.content);
-
-    if (startRewrite.wasRewritten) {
-      action.content = startRewrite.command;
     }
 
     const resp = await shell.executeCommand(this.runnerId.get(), action.content, () => {
@@ -817,6 +835,71 @@ export class ActionRunner {
       deployStatus,
       source: details?.source || 'netlify',
     });
+  }
+
+  /**
+   * Check if a command string looks like a valid shell command rather than
+   * an error message or arbitrary text that was mistakenly generated as a shell action.
+   * This prevents error messages from being queued/executed as commands.
+   */
+  #isLikelyValidCommand(command: string): boolean {
+    const trimmed = command.trim();
+
+    if (!trimmed) {
+      return false;
+    }
+
+    // Get the first word (before any space, semicolon, pipe, or ampersand)
+    const firstWord = trimmed.split(/[\s;|&]/)[0].toLowerCase();
+
+    // Common error message starters that are NOT valid shell commands
+    const errorIndicators = [
+      'cannot',
+      'error',
+      'failed',
+      'unable',
+      'could',
+      'module',
+      'import',
+      'warning',
+      'the',
+      'an',
+      'no',
+      'this',
+      'it',
+      'there',
+      'note',
+      'does',
+      'is',
+      'was',
+      'are',
+      'has',
+      'have',
+      'not',
+      'undefined',
+      'null',
+      'expected',
+      'unexpected',
+      'missing',
+      'invalid',
+      'unknown',
+      'uncaught',
+      'typeerror',
+      'syntaxerror',
+      'referenceerror',
+      'rangeerror',
+    ];
+
+    if (errorIndicators.includes(firstWord)) {
+      return false;
+    }
+
+    // Reject if the text starts with common error bracket patterns
+    if (/^\[(?:error|warn|plugin|vite|hmr)\b/i.test(trimmed)) {
+      return false;
+    }
+
+    return true;
   }
 
   async #validateShellCommand(command: string): Promise<{

@@ -8,19 +8,16 @@
 [![Node](https://img.shields.io/badge/Node-18.18%2B-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-![Devonz Screenshot](https://github.com/user-attachments/assets/e4c3067d-2539-4b5e-abab-d129d90b51dc)
-
-</div>
-
-<div align="center">
-
 [Features](#features) ━━ [Installation](#installation) ━━ [Configuration](#configuration)
 
 [Docker](#docker) ━━ [Scripts](#scripts) ━━ [Keeping Up to Date](#keeping-up-to-date) 
 
 [Project Structure](#project-structure) ━━ [Contributing](#contributing) ━━ [Acknowledgments](#acknowledgments)
 
+![Devonz Screenshot](https://github.com/user-attachments/assets/e4c3067d-2539-4b5e-abab-d129d90b51dc)
+
 </div>
+
 
 ## Quick Start
 
