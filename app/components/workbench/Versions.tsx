@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -119,6 +119,11 @@ export const Versions = memo(() => {
   useStore(versionsStore.versions);
 
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Backfill missing thumbnails when the panel is opened
+  useEffect(() => {
+    versionsStore.backfillMissingThumbnails();
+  }, []);
 
   const allVersions = versionsStore.getAllVersions();
 

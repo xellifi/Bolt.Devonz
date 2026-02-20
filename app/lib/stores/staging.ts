@@ -1365,6 +1365,8 @@ export function createCheckpointBeforeAccept(): string | null {
     files,
   );
 
+  versionsStore.scheduleThumbnailCapture(version.id);
+
   logger.info(`Created checkpoint: ${version.id}`);
 
   return version.id;

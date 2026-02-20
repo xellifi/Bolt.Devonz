@@ -1,5 +1,5 @@
 import { useState, useCallback, memo } from 'react';
-import type { ElementInfo } from './Inspector';
+import type { ElementInfo } from './inspector-types';
 import { BoxModelEditor } from './BoxModelEditor';
 import { AiQuickActions } from './AIQuickActions';
 import { ElementTreeNavigator } from './ElementTreeNavigator';

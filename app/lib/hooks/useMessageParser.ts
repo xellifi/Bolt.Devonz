@@ -73,12 +73,17 @@ const messageParser = new EnhancedStreamingMessageParser({
           }
         }
 
-        // Capture thumbnail asynchronously and create version
-        versionsStore.capturePreviewThumbnail().then((thumbnail) => {
-          versionsStore.createVersion(versionMessageId, title, `Completed: ${title}`, fileSnapshot, thumbnail);
+        const version = versionsStore.createVersion(
+          versionMessageId,
+          title,
+          `Completed: ${title}`,
+          fileSnapshot,
+        );
 
-          logger.trace('Version created for message:', versionMessageId);
-        });
+        logger.trace('Version created for message:', versionMessageId);
+
+        // Capture thumbnail in the background with retries (preview may not be ready yet)
+        versionsStore.scheduleThumbnailCapture(version.id);
 
         pendingVersionData = null;
       }, 500);

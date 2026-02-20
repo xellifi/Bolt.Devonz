@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { ElementInfo } from './Inspector';
+import type { ElementInfo } from './inspector-types';
 
 interface AiQuickActionsProps {
   selectedElement: ElementInfo | null;

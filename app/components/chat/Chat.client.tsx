@@ -26,7 +26,7 @@ import { streamingState } from '~/lib/stores/streaming';
 import { filesToArtifacts } from '~/utils/fileUtils';
 import { supabaseConnection } from '~/lib/stores/supabase';
 import { defaultDesignScheme, type DesignScheme } from '~/types/design-scheme';
-import type { ElementInfo } from '~/components/workbench/Inspector';
+import type { ElementInfo } from '~/components/workbench/inspector-types';
 import type { TextUIPart, FileUIPart, Attachment } from '@ai-sdk/ui-utils';
 import { mcpStore } from '~/lib/stores/mcp';
 import type { LlmErrorAlertType } from '~/types/actions';

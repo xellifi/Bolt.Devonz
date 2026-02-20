@@ -203,7 +203,7 @@ All hooks live in `app/lib/hooks/`. They often wrap store access or provide data
 | ------- | ------------- | -------------- |
 | **IndexedDB** (`devonzHistory`) | Chat messages, snapshots | `app/lib/persistence/db.ts` |
 | **Cookies** | API keys, provider settings | `js-cookie` library |
-| **localStorage** | Theme preference, MCP settings (`mcp_settings`) | Direct `localStorage` API |
+| **localStorage** | Theme preference, MCP settings, locked files, project plan mode | `app/lib/persistence/localStorage.ts` |
 | **URL Parameters** | Chat ID | Remix route params |
 
 ### IndexedDB Schema

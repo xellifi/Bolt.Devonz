@@ -35,6 +35,7 @@ _worker.bundle
 
 Modelfile
 modelfiles
+build-output.log
 
 # docs ignore
 site

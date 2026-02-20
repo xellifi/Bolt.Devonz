@@ -224,121 +224,114 @@ class VersionsStore {
   }
 
   /**
-   * Capture a thumbnail from the preview iframe
-   * Returns a base64 data URL or undefined if capture fails
-   * Uses html2canvas inside the iframe to capture actual content
+   * Update a version's thumbnail and persist the change.
    */
-  async capturePreviewThumbnail(): Promise<string | undefined> {
-    try {
-      // Dynamic import to avoid circular dependencies
-      const { requestPreviewScreenshot } = await import('~/components/workbench/Preview');
-      const screenshot = await requestPreviewScreenshot({ width: 320, height: 200 }, 5000);
+  updateThumbnail(versionId: string, thumbnail: string) {
+    const version = this.versions.get()[versionId];
 
-      return screenshot || undefined;
-    } catch (error) {
-      logger.warn('Failed to capture preview thumbnail:', error);
-      return this._generateFallbackThumbnail();
+    if (version) {
+      this.versions.setKey(versionId, { ...version, thumbnail });
+      this._persistToDB();
     }
   }
 
   /**
-   * Generate a fallback thumbnail when screenshot capture fails
+   * Attempt a single screenshot capture from the preview iframe.
+   * Returns the data URL or undefined if the iframe isn't available / capture fails.
    */
-  private _generateFallbackThumbnail(): string | undefined {
-    try {
-      const width = 320;
-      const height = 200;
+  private async _tryCapture(): Promise<string | undefined> {
+    const { requestPreviewScreenshot } = await import('~/components/workbench/Preview');
+    const screenshot = await requestPreviewScreenshot({ width: 320, height: 200 }, 5000);
 
-      // Create a canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
+    return screenshot || undefined;
+  }
 
-      const ctx = canvas.getContext('2d');
+  /**
+   * Check whether a screenshot result is a real capture (not a fallback placeholder).
+   * Placeholder images are small PNGs (~2-4 KB). Real captures are larger JPEGs.
+   */
+  private _isRealScreenshot(dataUrl: string): boolean {
+    return dataUrl.length > 6000 && dataUrl.startsWith('data:image/jpeg');
+  }
 
-      if (!ctx) {
-        return undefined;
+  /**
+   * Capture a thumbnail from the preview iframe with retry logic.
+   * The preview often isn't loaded yet when artifacts finish (npm install / dev
+   * server are still running), so we retry with increasing delays.
+   *
+   * @param maxRetries  How many additional attempts after the first
+   * @param retryDelays Delay in ms before each retry (index = retry number)
+   */
+  async capturePreviewThumbnail(
+    maxRetries = 4,
+    retryDelays = [3000, 6000, 10000, 15000],
+  ): Promise<string | undefined> {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const result = await this._tryCapture();
+
+        if (result && this._isRealScreenshot(result)) {
+          return result;
+        }
+
+        logger.trace(`Capture attempt ${attempt + 1} returned placeholder, will retry...`);
+      } catch (error) {
+        logger.trace(`Capture attempt ${attempt + 1} failed:`, error);
       }
 
-      // Dark background with gradient
-      const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-      bgGradient.addColorStop(0, '#1a1f2e');
-      bgGradient.addColorStop(1, '#0f1219');
-      ctx.fillStyle = bgGradient;
-      ctx.fillRect(0, 0, width, height);
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, retryDelays[attempt] ?? 5000));
+      }
+    }
 
-      // Browser chrome mockup - top bar
-      ctx.fillStyle = '#252a38';
-      ctx.fillRect(0, 0, width, 28);
+    logger.warn('All capture attempts returned placeholders — giving up');
 
-      // Traffic lights
-      ctx.fillStyle = '#ff5f57';
-      ctx.beginPath();
-      ctx.arc(12, 14, 5, 0, Math.PI * 2);
-      ctx.fill();
+    return undefined;
+  }
 
-      ctx.fillStyle = '#febc2e';
-      ctx.beginPath();
-      ctx.arc(28, 14, 5, 0, Math.PI * 2);
-      ctx.fill();
+  /**
+   * Schedule a deferred thumbnail capture for a version.
+   * Creates the version immediately (so it shows up in the UI right away)
+   * then captures the thumbnail in the background and updates the version.
+   */
+  scheduleThumbnailCapture(versionId: string) {
+    this.capturePreviewThumbnail().then((thumbnail) => {
+      if (thumbnail) {
+        this.updateThumbnail(versionId, thumbnail);
+        logger.trace(`Thumbnail captured for version ${versionId}`);
+      }
+    });
+  }
 
-      ctx.fillStyle = '#28c840';
-      ctx.beginPath();
-      ctx.arc(44, 14, 5, 0, Math.PI * 2);
-      ctx.fill();
+  /**
+   * Backfill missing thumbnails for versions that don't have one.
+   * Called when the Versions panel is opened or the preview becomes available.
+   * Captures once and applies the current preview state to all versions without
+   * thumbnails (the preview always shows the latest code, so every version gets
+   * the same screenshot -- but a real screenshot is far better than a placeholder).
+   */
+  async backfillMissingThumbnails(): Promise<void> {
+    const allVersions = this.getAllVersions();
+    const missing = allVersions.filter((v) => !v.thumbnail);
 
-      // URL bar
-      ctx.fillStyle = '#1a1f2e';
-      ctx.roundRect(60, 6, width - 70, 16, 4);
-      ctx.fill();
+    if (missing.length === 0) {
+      return;
+    }
 
-      // Content area - page mockup
-      const contentY = 38;
+    logger.trace(`Backfilling thumbnails for ${missing.length} version(s)`);
 
-      // Header bar
-      ctx.fillStyle = '#2d3548';
-      ctx.fillRect(0, contentY, width, 32);
+    try {
+      const result = await this._tryCapture();
 
-      // Logo placeholder
-      ctx.fillStyle = '#3b82f6';
-      ctx.beginPath();
-      ctx.roundRect(10, contentY + 8, 60, 16, 3);
-      ctx.fill();
+      if (result && this._isRealScreenshot(result)) {
+        for (const version of missing) {
+          this.updateThumbnail(version.id, result);
+        }
 
-      // Nav items
-      ctx.fillStyle = 'rgba(255,255,255,0.3)';
-      ctx.fillRect(width - 120, contentY + 12, 30, 8);
-      ctx.fillRect(width - 80, contentY + 12, 30, 8);
-      ctx.fillRect(width - 40, contentY + 12, 25, 8);
-
-      // Hero section
-      ctx.fillStyle = 'rgba(255,255,255,0.15)';
-      ctx.fillRect(20, contentY + 50, width * 0.6, 20);
-      ctx.fillStyle = 'rgba(255,255,255,0.08)';
-      ctx.fillRect(20, contentY + 78, width * 0.45, 12);
-      ctx.fillRect(20, contentY + 95, width * 0.5, 12);
-
-      // CTA button
-      ctx.fillStyle = '#3b82f6';
-      ctx.beginPath();
-      ctx.roundRect(20, contentY + 115, 70, 24, 4);
-      ctx.fill();
-
-      // Sidebar/content blocks
-      ctx.fillStyle = 'rgba(255,255,255,0.05)';
-      ctx.beginPath();
-      ctx.roundRect(width - 90, contentY + 50, 70, 90, 4);
-      ctx.fill();
-
-      // Border
-      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(0.5, 0.5, width - 1, height - 1);
-
-      return canvas.toDataURL('image/png', 0.8);
-    } catch (error) {
-      logger.warn('Failed to capture preview thumbnail:', error);
-      return undefined;
+        logger.trace(`Backfill succeeded for ${missing.length} version(s)`);
+      }
+    } catch {
+      // Silently ignore — the placeholder icon is fine as a fallback
     }
   }
 

@@ -1,6 +1,7 @@
 import type { WebContainer } from '@webcontainer/api';
 import { atom } from 'nanostores';
 import { createScopedLogger } from '~/utils/logger';
+import { versionsStore } from '~/lib/stores/versions';
 
 const logger = createScopedLogger('PreviewsStore');
 
@@ -186,6 +187,9 @@ export class PreviewsStore {
 
       // Initial storage sync when preview is ready
       this._broadcastStorageSync();
+
+      // Backfill version thumbnails after a short delay for the iframe to render
+      setTimeout(() => versionsStore.backfillMissingThumbnails(), 2000);
     });
 
     // Listen for port events

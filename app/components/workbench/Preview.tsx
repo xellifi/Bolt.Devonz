@@ -8,7 +8,7 @@ import { PortDropdown } from './PortDropdown';
 import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
 import { ExpoQrModal } from '~/components/workbench/ExpoQrModal';
 import { InspectorPanel } from './InspectorPanel';
-import type { ElementInfo } from './Inspector';
+import type { ElementInfo } from './inspector-types';
 import { getPreviewErrorHandler } from '~/utils/previewErrorHandler';
 import { createScopedLogger } from '~/utils/logger';
 

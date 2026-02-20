@@ -16,7 +16,7 @@ import type { ProviderInfo } from '~/types/model';
 import type { ModelInfo } from '~/lib/modules/llm/types';
 import { ColorSchemeDialog } from '~/components/ui/ColorSchemeDialog';
 import type { DesignScheme } from '~/types/design-scheme';
-import type { ElementInfo } from '~/components/workbench/Inspector';
+import type { ElementInfo } from '~/components/workbench/inspector-types';
 import { McpTools } from './MCPTools';
 import { WebSearch } from './WebSearch.client';
 import { ChatModeSelector } from './ChatModeSelector';

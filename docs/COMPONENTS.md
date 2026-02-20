@@ -44,7 +44,6 @@ The primary user interaction surface. Handles message display, input, file uploa
 | `LLMApiAlert.tsx` | LLM API error alerts |
 | `SupabaseAlert.tsx` | Supabase connection alerts |
 | `ChatModeSelector.tsx` | Unified Build/Plan/Discuss mode selector (Radix Popover) — replaces separate Plan and Discuss toggles |
-| `PlanApprovalAlert.tsx` | ~~Plan approval UI~~ — **deprecated**, no longer imported (dead code) |
 | `DicussMode.tsx` | Discuss (non-coding) mode |
 | `MCPTools.tsx` | MCP tools indicator in the chat toolbar; MCP tool selection |
 | `chatExportAndImport/` | Chat export/import functionality |
@@ -66,7 +65,7 @@ The code editing, file management, terminal, and preview environment.
 | `Versions.tsx` | Version history/snapshots |
 | `StagedChangesPanel.tsx` | Git-like staged changes |
 | `DiffPreviewModal.tsx` | Side-by-side diff viewer |
-| `Inspector.tsx` | DOM element inspector |
+| `inspector-types.ts` | Type definitions for element inspector (`ElementInfo`, `ElementSummary`, `ElementHierarchy`) |
 | `InspectorPanel.tsx` | Inspector panel UI |
 | `PortDropdown.tsx` | Dev server port selector |
 | `AIQuickActions.tsx` | AI-powered quick action buttons |

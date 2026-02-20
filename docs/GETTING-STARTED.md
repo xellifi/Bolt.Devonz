@@ -83,6 +83,12 @@ AWS_REGION=us-east-1
 
 # Z.ai
 ZAI_API_KEY=your-zai-key
+
+# Fireworks
+FIREWORKS_API_KEY=...
+
+# Cerebras
+CEREBRAS_API_KEY=...
 ```
 
 ### MCP Setup
@@ -252,7 +258,7 @@ devonz.diy/
 ├── icons/                # Custom SVG icons
 ├── public/               # Static files
 ├── scripts/              # Build scripts
-└── supabase/             # Supabase configuration
+└── types/                # Global type declarations
 ```
 
 ---

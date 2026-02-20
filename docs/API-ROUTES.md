@@ -61,6 +61,7 @@ Validated with Zod. Returns a data stream with:
 | `/api/models/:provider` | GET | List models for a specific provider |
 | `/api/configured-providers` | GET | List which providers have API keys configured |
 | `/api/check-env-key` | GET | Check if a specific environment variable is set |
+| `/api/check-env-keys` | GET | Bulk check multiple environment variables at once |
 | `/api/export-api-keys` | GET | Export API keys (for backup) |
 
 ---
@@ -139,14 +140,7 @@ Validated with Zod. Returns a data stream with:
 | `/api/system/git-info` | GET | Git installation and version info |
 | `/api/bug-report` | POST | Submit bug reports |
 | `/api/version-check` | GET | Compares local commit hash against latest GitHub commit to detect available updates |
-
----
-
-## Utility
-
-| Endpoint | Method | Purpose |
-| -------- | ------ | ------- |
-| `/api/spline-proxy` | GET/POST | Proxy for Spline 3D assets |
+| `/api/web-search` | POST | Fetch web content with SSRF protection for AI web search |
 
 ---
 
@@ -156,7 +150,9 @@ Validated with Zod. Returns a data stream with:
 | ----- | --------- | ------- |
 | `/` | `_index.tsx` | Landing page with chat interface |
 | `/chat/:id` | `chat.$id.tsx` | Chat page with specific conversation loaded |
-| `/git` | `git.tsx` | Git operations page |
+| `/git` | `git.tsx` | Git URL import page |
+| `/webcontainer/connect/:id` | `webcontainer.connect.$id.tsx` | WebContainer connection setup |
+| `/webcontainer/preview/:id` | `webcontainer.preview.$id.tsx` | WebContainer preview iframe with error capture |
 
 ---
 

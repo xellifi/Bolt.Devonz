@@ -38,7 +38,7 @@
 │  │  OpenAI · Anthropic · Google · Ollama · 18 more     │  │
 │  │  (22 total: + Cerebras, Cohere, Deepseek, Fireworks,│  │
 │  │   Groq, HuggingFace, Hyperbolic, Mistral, Moonshot, │  │
-│  │   OpenRouter, OpenAILike, Perplexity, xAI, Together, │  │
+│  │   OpenRouter, OpenAILike, Perplexity, xAI, Together,│  │
 │  │   LMStudio, AmazonBedrock, Github, Z.ai)            │  │
 │  └────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────┘
@@ -56,7 +56,7 @@ React components organized into 9 groups. See [Components](COMPONENTS.md) for fu
 
 ### 2. State Layer (`app/lib/stores/`)
 
-29 nanostore files managing all application state. See [State Management](STATE-MANAGEMENT.md) for full details.
+25 nanostore files managing all application state. See [State Management](STATE-MANAGEMENT.md) for full details.
 
 **Key pattern**: Class-based stores (`WorkbenchStore`) compose sub-stores (`EditorStore`, `FilesStore`, `TerminalStore`, `PreviewsStore`). HMR-safe via `import.meta.hot.data`.
 
@@ -74,6 +74,7 @@ Business logic separated from UI:
 | `githubApiService.ts` | GitHub API operations |
 | `gitlabApiService.ts` | GitLab API operations |
 | `importExportService.ts` | Chat import/export functionality |
+| `repositoryPushService.ts` | Push project files to remote Git repositories (GitHub/GitLab) |
 | `localModelHealthMonitor.ts` | Monitors local model (Ollama/LMStudio) availability |
 
 ### 4. LLM Layer (`app/lib/modules/llm/`)
@@ -89,18 +90,21 @@ Handles LLM response parsing and action execution:
 | File | Purpose |
 | ---- | ------- |
 | `message-parser.ts` | Parses LLM streaming output into structured actions (file writes, shell commands) |
-| `enhanced-message-parser.ts` | Extended parser with additional capabilities |
+| `enhanced-message-parser.ts` | Extended parser that auto-wraps untagged code blocks and shell commands into action tags |
 | `action-runner.ts` | Executes parsed actions against WebContainer (create files, run commands) |
 
 ### 6. Persistence Layer (`app/lib/persistence/`)
 
 | File | Purpose |
 | ---- | ------- |
-| `db.ts` | IndexedDB operations (chat history, snapshots) |
-| `useChatHistory.ts` | React hook for chat history CRUD |
-| `localStorage.ts` | Theme and preference persistence |
-| `lockedFiles.ts` | File lock management |
-| `snapshotUtils.ts` | Chat snapshot utilities |
+| `db.ts` | IndexedDB schema and connection management |
+| `chats.ts` | Chat CRUD operations (getAllChats, getChatById, saveChat, deleteChat) |
+| `useChatHistory.ts` | React hook for chat history with IndexedDB, URL sync, duplication |
+| `localStorage.ts` | Client-side localStorage utilities with error handling |
+| `lockedFiles.ts` | File/folder lock management per chat (localStorage-backed) |
+| `snapshotUtils.ts` | Global snapshot utilities for persisting file state |
+| `projectPlanMode.ts` | Project plan mode settings per chat (localStorage-backed) |
+| `ChatDescription.client.tsx` | Chat description editing component |
 
 ### 7. Server Layer (`app/routes/api.*`)
 

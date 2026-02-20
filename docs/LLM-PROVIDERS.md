@@ -6,7 +6,7 @@
 
 ## Overview
 
-Devonz supports **20 LLM providers** through a pluggable provider system built on the [Vercel AI SDK](https://sdk.vercel.ai/). Each provider is a self-contained class that extends `BaseProvider`.
+Devonz supports **22 LLM providers** through a pluggable provider system built on the [Vercel AI SDK](https://sdk.vercel.ai/). Each provider is a self-contained class that extends `BaseProvider`.
 
 ---
 
@@ -33,6 +33,8 @@ Devonz supports **20 LLM providers** through a pluggable provider system built o
 | Ollama | `OLLAMA_API_BASE_URL` | Yes | Local models (no API key) |
 | LM Studio | `LMSTUDIO_API_BASE_URL` | Yes | Local models (no API key) |
 | Z.ai | `ZAI_API_KEY` | No | 10 static GLM models optimized for coding tasks |
+| Fireworks | `FIREWORKS_API_KEY` | No | Qwen, Llama, DeepSeek, Mixtral on Fireworks infrastructure |
+| Cerebras | `CEREBRAS_API_KEY` | No | Qwen, Llama on Cerebras fast inference |
 | OpenAI-Like | `OPENAI_LIKE_API_BASE_URL` | No | Any OpenAI-compatible API |
 
 ---
@@ -74,7 +76,7 @@ LLMManager (singleton)
     ├── OpenAIProvider
     ├── AnthropicProvider
     ├── GoogleProvider
-    └── ... (19 total)
+    └── ... (22 total)
 ```
 
 ### Key Files

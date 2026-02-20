@@ -44,7 +44,7 @@
 | Language | TypeScript (strict) |
 | Styling | UnoCSS + SCSS + Radix UI |
 | State | Nanostores |
-| AI/LLM | Vercel AI SDK v4.3 (22 providers) |
+| AI/LLM | Vercel AI SDK (22 providers) |
 | Editor | CodeMirror 6 |
 | Terminal | xterm.js 5.5 |
 | Runtime | WebContainer API |
@@ -71,7 +71,6 @@ devonz.diy/
 ├── icons/                # Custom SVG icons (UnoCSS collection)
 ├── public/               # Static assets
 ├── scripts/              # Build/clean scripts
-├── supabase/             # Supabase config
 └── types/                # Global type declarations
 ```
 
