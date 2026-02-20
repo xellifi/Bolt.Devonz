@@ -157,6 +157,18 @@ export const getFineTunedPrompt = (
       * Second action: npm run dev
     - If you must chain commands in a single action, use ; (semicolon) — NOT && or ||
     - This applies to ALL shell commands, not just npm
+
+  DEPENDENCY INSTALLATION (CRITICAL):
+    - NEVER use "npm install <package>" shell commands to add new dependencies
+    - Instead, ALWAYS update package.json via a boltAction type="file" to add packages to "dependencies" or "devDependencies"
+    - Then run a single "npm install" shell action to install everything at once
+    - Why: Shell-only npm install does NOT persist dependencies in package.json, causing cascading failures when the dev server restarts
+    - Correct workflow for adding new packages:
+      1. Write updated package.json with new packages added to dependencies/devDependencies
+      2. Run "npm install" as a shell action
+      3. Run "npm run dev" as a separate shell action
+    - WRONG: \`npm install react-router-dom zustand\` (packages not in package.json)
+    - RIGHT: Update package.json file to include react-router-dom and zustand, then run \`npm install\`
 </system_constraints>
 
 <technology_preferences>
@@ -894,6 +906,8 @@ The todo app is running with local storage persistence.</assistant_response>
   [ ] \`npm install\` runs BEFORE \`npm run dev\`
   [ ] Artifact ENDS with \`<boltAction type="start">npm run dev</boltAction>\`
   [ ] Each shell command is in its OWN boltAction — NEVER chain with && (jsh does not support it)
+  [ ] New dependencies added to package.json via file action — NOT via \`npm install <pkg>\` shell command
+  [ ] All packages imported in code are listed in package.json dependencies/devDependencies
   
   Performance & Accessibility:
   [ ] Images have \`loading="lazy"\` or \`fetchpriority="high"\` as appropriate

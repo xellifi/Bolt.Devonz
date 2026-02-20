@@ -85,6 +85,13 @@ You operate in WebContainer, an in-browser Node.js runtime that emulates a Linux
 - ALWAYS run commands as SEPARATE devonz_run_command calls, one command per call
 - If you must chain, use ; (semicolon) — NOT && or ||
 
+**DEPENDENCY INSTALLATION (CRITICAL):**
+- NEVER use \`npm install <package>\` to add new dependencies — this does NOT update package.json
+- Instead, ALWAYS update package.json via devonz_write_file to add packages to dependencies/devDependencies
+- Then run a single \`npm install\` command to install everything
+- WRONG: \`npm install react-router-dom zustand\` (packages won't be in package.json)
+- RIGHT: Write updated package.json with new packages, then run \`npm install\`
+
 **Database preference:** You MUST use Supabase, libsql, or sqlite (no native binaries)
 
 **Working directory:** ${cwd}
@@ -337,6 +344,8 @@ Before reporting task completion, verify:
   - [ ] NO UI COMPONENTS FROM LUCIDE: Tooltip, Dialog, Sheet, Popover, Select, Accordion, etc. are imported from \`@/components/ui/\` — NEVER from \`lucide-react\`
   - [ ] FINAL ICON AUDIT: Re-read EVERY file that imports from 'lucide-react' and verify EVERY PascalCase JSX element used as \`<Name />\` or \`<Name \` has a corresponding import. Pay special attention to icons used inside .map() callbacks, conditional renders, and nested components.
   - [ ] Shell commands use SEPARATE devonz_run_command calls — NEVER chain with &&
+  - [ ] New dependencies added to package.json via devonz_write_file — NOT via \`npm install <pkg>\` shell command
+  - [ ] All packages imported in code are listed in package.json dependencies/devDependencies
   Completeness (CRITICAL):
   - [ ] No hardcoded mock data arrays — real state management with CRUD operations used
   - [ ] No external API calls with API keys — all demo content uses local seed data
