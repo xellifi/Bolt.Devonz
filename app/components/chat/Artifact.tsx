@@ -303,9 +303,13 @@ const ActionList = memo(({ actions }: ActionListProps) => {
               // File was directly written (staging disabled or auto-approved)
               diffStats = { linesAdded: action.content.split('\n').length, linesRemoved: 0 };
               fileContent = action.content;
-              actionLabel = 'Create';
+
+              // Check if the file already existed in the workbench to show Edit vs Create
+              const existingFile = workbenchStore.files.get()[`${WORK_DIR}/${filePath}`];
+              actionLabel = existingFile ? 'Edit' : 'Create';
             } else {
-              actionLabel = 'Create';
+              const existingFile = workbenchStore.files.get()[`${WORK_DIR}/${filePath}`];
+              actionLabel = existingFile ? 'Edit' : 'Create';
             }
           } else if (type === 'shell') {
             actionLabel = 'Run command';

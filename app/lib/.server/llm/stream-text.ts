@@ -52,10 +52,76 @@ function getCompletionTokenLimit(modelDetails: ModelInfo): number {
   return Math.min(MAX_TOKENS, 16384);
 }
 
+/*
+ * Essential files whose content the LLM needs to see in the template message.
+ * Everything else (shadcn components, etc.) gets replaced with "..." to save tokens.
+ */
+const ESSENTIAL_FILE_PATTERNS = [
+  'package.json',
+  'vite.config.ts',
+  'vite.config.js',
+  'tsconfig.json',
+  'tsconfig.app.json',
+  'tsconfig.node.json',
+  'tailwind.config.js',
+  'tailwind.config.ts',
+  'postcss.config.js',
+  'postcss.config.mjs',
+  'components.json',
+  'index.html',
+  'src/App.tsx',
+  'src/App.jsx',
+  'src/main.tsx',
+  'src/main.jsx',
+  'src/index.tsx',
+  'src/index.jsx',
+  'src/index.css',
+  'src/App.css',
+  'src/lib/utils.ts',
+  'src/vite-env.d.ts',
+  'app/root.tsx',
+  'app/entry.client.tsx',
+  'app/entry.server.tsx',
+  'next.config.js',
+  'next.config.ts',
+  'next.config.mjs',
+];
+
+function isEssentialFile(filePath: string): boolean {
+  return ESSENTIAL_FILE_PATTERNS.some((pattern) => filePath === pattern || filePath.endsWith(`/${pattern}`));
+}
+
+/**
+ * Simplify non-essential boltAction file contents to "..." to reduce token usage.
+ * Essential config/entry files keep their full content so the LLM understands the project structure.
+ * Lock files are stripped entirely (they're huge and the LLM never needs them).
+ */
+function simplifyTemplateActions(text: string): string {
+  /* Strip lock files entirely — they can be 6000+ lines (~25K tokens) */
+  let result = text.replace(
+    /<boltAction type="file" filePath="(?:package-lock\.json|yarn\.lock|pnpm-lock\.yaml)">[\s\S]*?<\/boltAction>/g,
+    '',
+  );
+
+  /* Replace non-essential file contents with "..." */
+  result = result.replace(
+    /(<boltAction[^>]*type="file"[^>]*filePath="([^"]+)"[^>]*>)([\s\S]*?)(<\/boltAction>)/g,
+    (match, openTag: string, filePath: string, _content: string, closeTag: string) => {
+      if (isEssentialFile(filePath)) {
+        return match;
+      }
+
+      return `${openTag}...${closeTag}`;
+    },
+  );
+
+  return result;
+}
+
 function sanitizeText(text: string): string {
   let sanitized = text.replace(/<div class=\\"__boltThought__\\">.*?<\/div>/s, '');
   sanitized = sanitized.replace(/<think>.*?<\/think>/s, '');
-  sanitized = sanitized.replace(/<boltAction type="file" filePath="package-lock\.json">[\s\S]*?<\/boltAction>/g, '');
+  sanitized = simplifyTemplateActions(sanitized);
 
   return sanitized.trim();
 }

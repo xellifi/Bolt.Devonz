@@ -63,6 +63,9 @@ export function useChatHistory() {
   // Track last snapshot parameters so debounced file-change saves use the same message ID
   const lastSnapshotParamsRef = useRef<{ chatIdx: string; chatSummary?: string } | null>(null);
 
+  /* Serialization lock to prevent concurrent storeMessageHistory calls which cause 'urlId' uniqueness constraint errors in IndexedDB */
+  const isStoringRef = useRef(false);
+
   useEffect(() => {
     if (!db) {
       setReady(true);
@@ -358,80 +361,94 @@ export function useChatHistory() {
         return;
       }
 
-      const { firstArtifact } = workbenchStore;
-      messages = messages.filter((m) => !m.annotations?.includes('no-store'));
-
       /*
-       * Ensure chatId is set on the very first message.
-       * Always use a sequential numeric ID from getNextId() for consistency.
+       * Skip if another storeMessageHistory call is already in-flight.
+       * The 50ms sampler will try again with the latest messages.
        */
-      if (initialMessages.length === 0 && !chatId.get()) {
-        const nextId = await getNextId(db);
-        chatId.set(nextId);
-        versionsStore.setDBContext(db, nextId);
-      }
-
-      /*
-       * Ensure urlId is set once and never changes.
-       * Derive it from the numeric chatId so URLs are always consistent
-       * (e.g. /chat/1, /chat/2) regardless of whether artifacts exist.
-       * Previously, artifact-based IDs like "2-1771470328283-0" were used
-       * when the AI generated artifacts, causing inconsistent URLs.
-       */
-      let resolvedUrlId = urlId;
-
-      if (!resolvedUrlId) {
-        const id = chatId.get()!;
-        resolvedUrlId = await getUrlId(db, id);
-        setUrlId(resolvedUrlId);
-        navigateChat(resolvedUrlId);
-      }
-
-      let chatSummary: string | undefined = undefined;
-      const lastMessage = messages[messages.length - 1];
-
-      if (lastMessage.role === 'assistant') {
-        const annotations = lastMessage.annotations as JSONValue[];
-        const filteredAnnotations = (annotations?.filter(
-          (annotation: JSONValue) =>
-            annotation && typeof annotation === 'object' && Object.keys(annotation).includes('type'),
-        ) || []) as (Record<string, unknown> & { type: string })[];
-
-        if (filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')) {
-          chatSummary = filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')?.summary as
-            | string
-            | undefined;
-        }
-      }
-
-      // Save params so debounced file-change subscriber can re-save with updated files
-      lastSnapshotParamsRef.current = { chatIdx: messages[messages.length - 1].id, chatSummary };
-
-      takeSnapshot(messages[messages.length - 1].id, workbenchStore.files.get(), resolvedUrlId, chatSummary);
-
-      if (!description.get() && firstArtifact?.title) {
-        description.set(firstArtifact?.title);
-      }
-
-      // Ensure chatId.get() is used for the final setMessages call
-      const finalChatId = chatId.get();
-
-      if (!finalChatId) {
-        logger.error('Cannot save messages, chat ID is not set.');
-        toast.error('Failed to save chat messages: Chat ID missing.');
-
+      if (isStoringRef.current) {
         return;
       }
 
-      await setMessages(
-        db,
-        finalChatId,
-        [...archivedMessages, ...messages],
-        resolvedUrlId, // Always use the resolved urlId, not stale useState
-        description.get(),
-        undefined,
-        chatMetadata.get(),
-      );
+      isStoringRef.current = true;
+
+      try {
+        const { firstArtifact } = workbenchStore;
+        messages = messages.filter((m) => !m.annotations?.includes('no-store'));
+
+        /*
+         * Ensure chatId is set on the very first message.
+         * Always use a sequential numeric ID from getNextId() for consistency.
+         */
+        if (initialMessages.length === 0 && !chatId.get()) {
+          const nextId = await getNextId(db);
+          chatId.set(nextId);
+          versionsStore.setDBContext(db, nextId);
+        }
+
+        /*
+         * Ensure urlId is set once and never changes.
+         * Derive it from the numeric chatId so URLs are always consistent
+         * (e.g. /chat/1, /chat/2) regardless of whether artifacts exist.
+         * Previously, artifact-based IDs like "2-1771470328283-0" were used
+         * when the AI generated artifacts, causing inconsistent URLs.
+         */
+        let resolvedUrlId = urlId;
+
+        if (!resolvedUrlId) {
+          const id = chatId.get()!;
+          resolvedUrlId = await getUrlId(db, id);
+          setUrlId(resolvedUrlId);
+          navigateChat(resolvedUrlId);
+        }
+
+        let chatSummary: string | undefined = undefined;
+        const lastMessage = messages[messages.length - 1];
+
+        if (lastMessage.role === 'assistant') {
+          const annotations = lastMessage.annotations as JSONValue[];
+          const filteredAnnotations = (annotations?.filter(
+            (annotation: JSONValue) =>
+              annotation && typeof annotation === 'object' && Object.keys(annotation).includes('type'),
+          ) || []) as (Record<string, unknown> & { type: string })[];
+
+          if (filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')) {
+            chatSummary = filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')?.summary as
+              | string
+              | undefined;
+          }
+        }
+
+        // Save params so debounced file-change subscriber can re-save with updated files
+        lastSnapshotParamsRef.current = { chatIdx: messages[messages.length - 1].id, chatSummary };
+
+        takeSnapshot(messages[messages.length - 1].id, workbenchStore.files.get(), resolvedUrlId, chatSummary);
+
+        if (!description.get() && firstArtifact?.title) {
+          description.set(firstArtifact?.title);
+        }
+
+        // Ensure chatId.get() is used for the final setMessages call
+        const finalChatId = chatId.get();
+
+        if (!finalChatId) {
+          logger.error('Cannot save messages, chat ID is not set.');
+          toast.error('Failed to save chat messages: Chat ID missing.');
+
+          return;
+        }
+
+        await setMessages(
+          db,
+          finalChatId,
+          [...archivedMessages, ...messages],
+          resolvedUrlId, // Always use the resolved urlId, not stale useState
+          description.get(),
+          undefined,
+          chatMetadata.get(),
+        );
+      } finally {
+        isStoringRef.current = false;
+      }
     },
     duplicateCurrentChat: async (listItemId: string) => {
       if (!db || (!mixedId && !listItemId)) {

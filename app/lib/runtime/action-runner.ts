@@ -454,10 +454,32 @@ export class ActionRunner {
       unreachable('Shell terminal not found');
     }
 
-    const resp = await shell.executeCommand(this.runnerId.get(), action.content, () => {
+    /*
+     * Dev servers (npm run dev, vite, etc.) run indefinitely and never exit,
+     * so shell.executeCommand() would never resolve. We race the execution
+     * against a timeout — if the command hasn't exited after the timeout,
+     * the server started successfully and we mark the action complete.
+     * If the command exits quickly (e.g. port conflict), we catch the error.
+     */
+    const SERVER_READY_TIMEOUT = 5000;
+
+    const execPromise = shell.executeCommand(this.runnerId.get(), action.content, () => {
       logger.debug(`[${action.type}]:Aborting Action\n\n`, action);
       action.abort();
     });
+
+    const timeoutPromise = new Promise<'server-running'>((resolve) =>
+      setTimeout(() => resolve('server-running'), SERVER_READY_TIMEOUT),
+    );
+
+    const result = await Promise.race([execPromise, timeoutPromise]);
+
+    if (result === 'server-running') {
+      logger.debug(`${action.type}: Dev server is running (command did not exit within ${SERVER_READY_TIMEOUT}ms)`);
+      return undefined;
+    }
+
+    const resp = result;
     logger.debug(`${action.type} Shell Response: [exit code:${resp?.exitCode}]`);
 
     if (resp?.exitCode != 0) {
@@ -549,6 +571,13 @@ export class ActionRunner {
 
     try {
       let contentToWrite = action.content;
+
+      /*
+       * Safety net: Strip any leaked bolt XML tags from file content.
+       * This can happen when the LLM omits closing tags and the parser's
+       * streaming path accidentally includes artifact/action markup.
+       */
+      contentToWrite = contentToWrite.replace(/<\/?boltArtifact[^>]*>/g, '').replace(/<\/?boltAction[^>]*>/g, '');
 
       /*
        * Safety net: When package.json is being overwritten, merge dependencies

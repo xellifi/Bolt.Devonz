@@ -310,6 +310,8 @@ ${file.content}
 </boltAction>`,
   )
   .join('\n')}
+<boltAction type="shell">npm install --legacy-peer-deps</boltAction>
+<boltAction type="start">npm run dev</boltAction>
 </boltArtifact>
 `;
   let userMessage = ``;
@@ -416,7 +418,9 @@ When modifying existing files, preserve all existing functionality and dependenc
 ---
 Now that the Template is imported please continue with my original request
 
-IMPORTANT: Dont Forget to install the dependencies before running the app by using \`npm install && npm run dev\`
+IMPORTANT: Dependencies are already being installed and the dev server will start automatically.
+Do NOT include \`npm install\`, \`npm run dev\`, or any Start Application / shell commands in your response.
+Just focus on creating or modifying the source files needed to fulfill the user's request.
 `;
 
   return {

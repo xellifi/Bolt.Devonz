@@ -10,6 +10,11 @@ $code-font-size: 13px;
 .MarkdownContent {
   line-height: 1.6;
   color: var(--bolt-elements-textPrimary);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 
   > *:not(:last-child) {
     margin-block-end: 16px;
@@ -92,6 +97,8 @@ $code-font-size: 13px;
   pre {
     padding: 20px 16px;
     border-radius: 6px;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   pre:has(> code) {

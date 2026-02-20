@@ -32,7 +32,7 @@ export function UserMessage({ content, parts }: UserMessageProps) {
     const textContent = stripMetadata(textItem?.text || '');
 
     return (
-      <div className="overflow-hidden flex flex-col gap-3 items-end w-full">
+      <div className="overflow-hidden flex flex-col gap-3 items-end w-full min-w-0">
         <div className="flex flex-row items-center gap-2 self-end">
           {profile?.avatar || profile?.username ? (
             <div className="flex items-center gap-2">
@@ -56,9 +56,9 @@ export function UserMessage({ content, parts }: UserMessageProps) {
             </div>
           )}
         </div>
-        <div className="flex flex-col gap-3 max-w-[85%] ml-auto">
+        <div className="flex flex-col gap-3 max-w-[85%] ml-auto overflow-hidden">
           {textContent && (
-            <div className="text-bolt-elements-textPrimary text-sm leading-relaxed">
+            <div className="text-bolt-elements-textPrimary text-sm leading-relaxed min-w-0">
               <Markdown html>{textContent}</Markdown>
             </div>
           )}
@@ -85,7 +85,7 @@ export function UserMessage({ content, parts }: UserMessageProps) {
   const textContent = stripMetadata(content);
 
   return (
-    <div className="flex flex-col items-end gap-3 w-full">
+    <div className="flex flex-col items-end gap-3 w-full min-w-0">
       <div className="flex items-center gap-2">
         {profile?.avatar ? (
           <>
@@ -107,7 +107,7 @@ export function UserMessage({ content, parts }: UserMessageProps) {
           </>
         )}
       </div>
-      <div className="max-w-[85%] ml-auto">
+      <div className="max-w-[85%] ml-auto overflow-hidden">
         {images.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {images.map((item, index) => (
@@ -121,7 +121,7 @@ export function UserMessage({ content, parts }: UserMessageProps) {
             ))}
           </div>
         )}
-        <div className="text-bolt-elements-textPrimary text-sm leading-relaxed">
+        <div className="text-bolt-elements-textPrimary text-sm leading-relaxed min-w-0">
           <Markdown html>{textContent}</Markdown>
         </div>
       </div>

@@ -157,6 +157,108 @@ describe('StreamingMessageParser', () => {
       runTest(input, expected);
     });
   });
+
+  describe('missing </boltAction> tag (implicit close via </boltArtifact>)', () => {
+    it('should close the last action implicitly when </boltAction> is missing', () => {
+      const callbacks = {
+        onArtifactOpen: vi.fn(),
+        onArtifactClose: vi.fn(),
+        onActionOpen: vi.fn(),
+        onActionClose: vi.fn(),
+      };
+
+      const parser = new StreamingMessageParser({
+        artifactElement: () => '',
+        callbacks,
+      });
+
+      const input =
+        'Before <boltArtifact title="Test" id="artifact_1"><boltAction type="file" filePath="App.css">.container { color: red; }</boltArtifact> After';
+
+      const result = parser.parse('msg_1', input);
+
+      expect(result).toEqual('Before  After');
+      expect(callbacks.onArtifactOpen).toHaveBeenCalledTimes(1);
+      expect(callbacks.onArtifactClose).toHaveBeenCalledTimes(1);
+      expect(callbacks.onActionOpen).toHaveBeenCalledTimes(1);
+      expect(callbacks.onActionClose).toHaveBeenCalledTimes(1);
+
+      // Ensure the content does NOT include </boltArtifact>
+      const actionCloseCall = callbacks.onActionClose.mock.calls[0][0];
+      expect(actionCloseCall.action.content).not.toContain('</boltArtifact>');
+      expect(actionCloseCall.action.content).toContain('.container { color: red; }');
+    });
+
+    it('should handle multiple actions where only the last is missing </boltAction>', () => {
+      const callbacks = {
+        onArtifactOpen: vi.fn(),
+        onArtifactClose: vi.fn(),
+        onActionOpen: vi.fn(),
+        onActionClose: vi.fn(),
+      };
+
+      const parser = new StreamingMessageParser({
+        artifactElement: () => '',
+        callbacks,
+      });
+
+      const input =
+        'Before <boltArtifact title="Test" id="artifact_1"><boltAction type="shell">npm install</boltAction><boltAction type="file" filePath="App.css">.container { color: red; }</boltArtifact> After';
+
+      const result = parser.parse('msg_2', input);
+
+      expect(result).toEqual('Before  After');
+      expect(callbacks.onArtifactOpen).toHaveBeenCalledTimes(1);
+      expect(callbacks.onArtifactClose).toHaveBeenCalledTimes(1);
+      expect(callbacks.onActionOpen).toHaveBeenCalledTimes(2);
+      expect(callbacks.onActionClose).toHaveBeenCalledTimes(2);
+
+      // The last action's content should NOT contain </boltArtifact>
+      const lastCloseCall = callbacks.onActionClose.mock.calls[1][0];
+      expect(lastCloseCall.action.content).not.toContain('</boltArtifact>');
+      expect(lastCloseCall.action.content).toContain('.container { color: red; }');
+    });
+
+    it('should handle streaming where </boltArtifact> arrives without </boltAction>', () => {
+      const callbacks = {
+        onArtifactOpen: vi.fn(),
+        onArtifactClose: vi.fn(),
+        onActionOpen: vi.fn(),
+        onActionClose: vi.fn(),
+        onActionStream: vi.fn(),
+      };
+
+      const parser = new StreamingMessageParser({
+        artifactElement: () => '',
+        callbacks,
+      });
+
+      /*
+       * Simulate streaming: chunk 1 has partial content,
+       * chunk 2 adds </boltArtifact> without </boltAction>
+       */
+      let accumulated =
+        '<boltArtifact title="Test" id="artifact_1"><boltAction type="file" filePath="App.css">.container { color: red; }';
+      parser.parse('msg_3', accumulated);
+
+      // At this point, onActionStream should have been called with clean content
+      if (callbacks.onActionStream.mock.calls.length > 0) {
+        const streamCall = callbacks.onActionStream.mock.calls[0][0];
+        expect(streamCall.action.content).not.toContain('</boltArtifact>');
+      }
+
+      // Now add </boltArtifact> without </boltAction>
+      accumulated += '</boltArtifact>';
+      parser.parse('msg_3', accumulated);
+
+      // The action should be implicitly closed with clean content
+      expect(callbacks.onActionClose).toHaveBeenCalledTimes(1);
+
+      const closeCall = callbacks.onActionClose.mock.calls[0][0];
+      expect(closeCall.action.content).not.toContain('</boltArtifact>');
+      expect(closeCall.action.content).toContain('.container { color: red; }');
+    });
+  });
 });
 
 describe('EnhancedStreamingMessageParser', () => {

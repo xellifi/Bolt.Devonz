@@ -186,27 +186,82 @@ export class StreamingMessageParser {
 
             i = closeIndex + ARTIFACT_ACTION_TAG_CLOSE.length;
           } else {
-            if ('type' in currentAction && currentAction.type === 'file') {
-              let content = input.slice(i);
+            /*
+             * No </boltAction> found yet. Check if </boltArtifact> exists — if so,
+             * the LLM omitted the closing </boltAction> tag. We treat
+             * </boltArtifact> as the implicit action boundary to prevent the
+             * raw tag from leaking into file content.
+             */
+            const potentialArtifactClose = input.indexOf(ARTIFACT_TAG_CLOSE, i);
 
-              if (!currentAction.filePath.endsWith('.md')) {
-                content = cleanoutMarkdownSyntax(content);
-                content = cleanEscapedTags(content);
+            if (potentialArtifactClose !== -1) {
+              // Implicit close: LLM omitted </boltAction> for the last action
+              currentAction.content += input.slice(i, potentialArtifactClose);
+
+              let content = currentAction.content.trim();
+
+              if ('type' in currentAction && currentAction.type === 'file') {
+                if (!currentAction.filePath.endsWith('.md')) {
+                  content = cleanoutMarkdownSyntax(content);
+                  content = cleanEscapedTags(content);
+                }
+
+                content += '\n';
               }
 
-              this._options.callbacks?.onActionStream?.({
+              currentAction.content = content;
+
+              this._options.callbacks?.onActionClose?.({
                 artifactId: currentArtifact.id,
                 messageId,
                 actionId: String(state.actionId - 1),
-                action: {
-                  ...(currentAction as FileAction),
-                  content,
-                  filePath: currentAction.filePath,
-                },
+                action: currentAction as BoltAction,
               });
-            }
 
-            break;
+              state.insideAction = false;
+              state.currentAction = { content: '' };
+
+              // Also close the artifact since the </boltArtifact> tag is what we found
+              this._options.callbacks?.onArtifactClose?.({
+                messageId,
+                artifactId: currentArtifact.id,
+                ...currentArtifact,
+              });
+
+              state.insideArtifact = false;
+              state.currentArtifact = undefined;
+
+              i = potentialArtifactClose + ARTIFACT_TAG_CLOSE.length;
+            } else {
+              // Pure streaming: no close tags found yet
+              if ('type' in currentAction && currentAction.type === 'file') {
+                let content = input.slice(i);
+
+                /*
+                 * Strip any partial bolt closing tags at the tail of the stream
+                 * (e.g. "</bolt", "</boltArti") that haven't fully arrived yet.
+                 */
+                content = content.replace(/<\/bolt[A-Za-z]*$/g, '');
+
+                if (!currentAction.filePath.endsWith('.md')) {
+                  content = cleanoutMarkdownSyntax(content);
+                  content = cleanEscapedTags(content);
+                }
+
+                this._options.callbacks?.onActionStream?.({
+                  artifactId: currentArtifact.id,
+                  messageId,
+                  actionId: String(state.actionId - 1),
+                  action: {
+                    ...(currentAction as FileAction),
+                    content,
+                    filePath: currentAction.filePath,
+                  },
+                });
+              }
+
+              break;
+            }
           }
         } else {
           const actionOpenIndex = input.indexOf(ARTIFACT_ACTION_TAG_OPEN, i);
