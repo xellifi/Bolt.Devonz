@@ -80,24 +80,32 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ temp
       >
         <div className={`${template.icon} text-5xl text-cyan-400`} />
         <p className="text-lg font-medium text-white">{template.name}</p>
-        <p className="text-sm" style={{ color: '#9ca3af' }}>
-          Click &quot;Preview&quot; to view the live site in a new tab
-        </p>
-        <a
-          href={template.vercelUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
-          style={{ color: '#3b82f6' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = '#60a5fa';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = '#3b82f6';
-          }}
-        >
-          Visit live site →
-        </a>
+        {template.vercelUrl ? (
+          <>
+            <p className="text-sm" style={{ color: '#9ca3af' }}>
+              Click &quot;Preview&quot; to view the live site in a new tab
+            </p>
+            <a
+              href={template.vercelUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+              style={{ color: '#3b82f6' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#60a5fa';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#3b82f6';
+              }}
+            >
+              Visit live site →
+            </a>
+          </>
+        ) : (
+          <p className="text-sm" style={{ color: '#9ca3af' }}>
+            Click &quot;Use Template&quot; to clone and customize this project
+          </p>
+        )}
       </div>
     );
   };
@@ -163,20 +171,22 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ temp
             ))}
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-            <button
-              onClick={handlePreview}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              style={{ backgroundColor: '#2a2a2a', color: '#ffffff', border: '1px solid #333333' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#333333';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#2a2a2a';
-              }}
-            >
-              <div className="i-ph:eye text-base" />
-              Preview
-            </button>
+            {template.vercelUrl && (
+              <button
+                onClick={handlePreview}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: '#2a2a2a', color: '#ffffff', border: '1px solid #333333' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#333333';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#2a2a2a';
+                }}
+              >
+                <div className="i-ph:eye text-base" />
+                Preview
+              </button>
+            )}
             <button
               onClick={handleUseTemplate}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors"

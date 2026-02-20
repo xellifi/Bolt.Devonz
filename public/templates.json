@@ -10,83 +10,103 @@
     "icon": "i-ph:cube-duotone"
   },
   {
-    "id": "botanica-plant-shop",
-    "name": "Botanica Plant Shop",
-    "description": "Premium indoor plant shop with elegant product showcases",
-    "category": "online-store",
-    "vercelUrl": "https://botanica-example.vercel.app",
-    "githubRepo": "zebbern/botanica-template",
-    "tags": ["e-commerce", "plants", "modern"],
-    "icon": "i-ph:shopping-bag-duotone"
-  },
-  {
-    "id": "studio-noir",
-    "name": "Studio Noir",
-    "description": "Dark and cinematic creative studio portfolio",
-    "category": "portfolio",
-    "vercelUrl": "https://studio-noir-example.vercel.app",
-    "githubRepo": "zebbern/studio-noir-template",
-    "tags": ["creative", "dark", "cinematic"],
-    "icon": "i-ph:camera-duotone"
-  },
-  {
-    "id": "nexus-analytics",
-    "name": "Nexus Analytics",
-    "description": "Executive analytics dashboard with sparkline cards and insights",
-    "category": "dashboard",
-    "vercelUrl": "https://nexus-analytics-example.vercel.app",
-    "githubRepo": "zebbern/nexus-analytics-template",
-    "tags": ["analytics", "charts", "dashboard"],
-    "icon": "i-ph:chart-bar-duotone"
-  },
-  {
-    "id": "social-scheduler",
-    "name": "Social Scheduler",
-    "description": "Schedule and manage social media posts across platforms",
-    "category": "saas",
-    "vercelUrl": "https://social-scheduler-example.vercel.app",
-    "githubRepo": "zebbern/social-scheduler-template",
-    "tags": ["social-media", "scheduling", "saas"],
-    "icon": "i-ph:calendar-duotone"
-  },
-  {
-    "id": "ai-content-studio",
-    "name": "AI Content Studio",
-    "description": "AI-powered content generation and management platform",
+    "id": "3d-model-generator",
+    "name": "3D Model Generator",
+    "description": "AI-powered 3D model generation and visualization tool",
     "category": "ai-app",
-    "vercelUrl": "https://ai-content-example.vercel.app",
-    "githubRepo": "zebbern/ai-content-template",
-    "tags": ["ai", "content", "generation"],
-    "icon": "i-ph:sparkle-duotone"
+    "vercelUrl": "https://3d-model-generator-psi.vercel.app",
+    "githubRepo": "devonz-templates/3d-model-generator",
+    "tags": ["3d", "ai", "generative", "modeling"],
+    "icon": "i-ph:cube-transparent-duotone"
   },
   {
-    "id": "modern-landing",
-    "name": "Modern Landing",
-    "description": "Clean, conversion-focused landing page with hero section",
+    "id": "3d-vector-visualization",
+    "name": "3D Vector Visualization",
+    "description": "System for visualizing and exploring 3D vector data",
+    "category": "dashboard",
+    "vercelUrl": "https://3d-vector-visualization-system.vercel.app",
+    "githubRepo": "devonz-templates/3d-vector-visualization-system",
+    "tags": ["3d", "data-viz", "vectors", "analytics"],
+    "icon": "i-ph:chart-scatter-duotone"
+  },
+  {
+    "id": "ai-landing-page",
+    "name": "AI Landing Page",
+    "description": "Modern landing page template for AI-powered products",
     "category": "landing-page",
-    "vercelUrl": "https://modern-landing-example.vercel.app",
-    "githubRepo": "zebbern/modern-landing-template",
-    "tags": ["landing", "hero", "conversion"],
-    "icon": "i-ph:rocket-launch-duotone"
+    "vercelUrl": "https://ai-landing-page-puce.vercel.app",
+    "githubRepo": "devonz-templates/ai-landing-page",
+    "tags": ["ai", "marketing", "hero", "conversion"],
+    "icon": "i-ph:robot-duotone"
   },
   {
-    "id": "craft-portfolio",
-    "name": "Craft Portfolio",
-    "description": "Minimal portfolio with bento grid layout for creative work",
-    "category": "portfolio",
-    "vercelUrl": "https://craft-portfolio-example.vercel.app",
-    "githubRepo": "zebbern/craft-portfolio-template",
-    "tags": ["portfolio", "minimal", "bento"],
+    "id": "interface",
+    "name": "Interface",
+    "description": "Minimal dark-themed UI dashboard interface template",
+    "category": "dashboard",
+    "vercelUrl": "https://interface-black-omega.vercel.app",
+    "githubRepo": "devonz-templates/interface",
+    "tags": ["ui", "dashboard", "minimal", "dark-mode"],
     "icon": "i-ph:layout-duotone"
   },
   {
-    "id": "team-flow",
-    "name": "TeamFlow",
-    "description": "Team collaboration and workflow management dashboard",
+    "id": "luxury-portfolio",
+    "name": "Luxury Portfolio",
+    "description": "Premium personal portfolio with elegant aesthetics",
+    "category": "portfolio",
+    "vercelUrl": "https://luxury-portfolio-phi.vercel.app",
+    "githubRepo": "devonz-templates/luxury-portfolio",
+    "tags": ["portfolio", "luxury", "personal", "creative"],
+    "icon": "i-ph:diamond-duotone"
+  },
+  {
+    "id": "modern-agency-liquid-glass",
+    "name": "Modern Agency",
+    "description": "Agency website with liquid glass morphism effects",
+    "category": "landing-page",
+    "vercelUrl": "https://modern-agency-website-liquid-glass-ruddy.vercel.app",
+    "githubRepo": "devonz-templates/modern-agency-website-liquid-glass",
+    "tags": ["agency", "glassmorphism", "modern", "creative"],
+    "icon": "i-ph:globe-duotone"
+  },
+  {
+    "id": "ibra-automate",
+    "name": "Ibra Automate",
+    "description": "Workflow automation platform for streamlined processes",
     "category": "saas",
-    "vercelUrl": "https://teamflow-example.vercel.app",
-    "githubRepo": "zebbern/teamflow-template",
-    "tags": ["collaboration", "workflow", "teams"],
-    "icon": "i-ph:users-three-duotone"
+    "vercelUrl": "",
+    "githubRepo": "devonz-templates/ibra-automate",
+    "tags": ["automation", "workflow", "saas", "productivity"],
+    "icon": "i-ph:gear-six-duotone"
+  },
+  {
+    "id": "portfolio-main",
+    "name": "Portfolio Main",
+    "description": "Clean developer portfolio with project showcase",
+    "category": "portfolio",
+    "vercelUrl": "",
+    "githubRepo": "devonz-templates/portifolio-main",
+    "tags": ["portfolio", "developer", "projects", "clean"],
+    "icon": "i-ph:user-circle-duotone"
+  },
+  {
+    "id": "saas-landing-page",
+    "name": "SaaS Landing Page",
+    "description": "Conversion-focused landing page for SaaS products",
+    "category": "saas",
+    "vercelUrl": "https://saa-s-landing-page-beta-sand.vercel.app",
+    "githubRepo": "devonz-templates/saa-s-landing-page",
+    "tags": ["saas", "startup", "pricing", "features"],
+    "icon": "i-ph:rocket-launch-duotone"
+  },
+  {
+    "id": "web-navigation",
+    "name": "Web Navigation",
+    "description": "Curated web links and bookmarks navigation hub",
+    "category": "dashboard",
+    "vercelUrl": "https://web-navigation-gamma.vercel.app",
+    "githubRepo": "devonz-templates/web-navigation",
+    "tags": ["navigation", "bookmarks", "links", "directory"],
+    "icon": "i-ph:compass-duotone"
   }
 ]
