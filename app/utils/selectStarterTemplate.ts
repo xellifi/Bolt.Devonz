@@ -9,9 +9,10 @@ const logger = createScopedLogger('StarterTemplate');
 /**
  * Known shadcn/ui peer dependencies that MUST be in package.json
  * when using shadcn/ui components. Maps package name to version.
- * These are the Radix UI primitives and utilities that shadcn/ui imports.
+ * These are the Radix UI primitives, icons, and utilities that shadcn/ui imports.
  */
 const SHADCN_PEER_DEPS: Record<string, string> = {
+  '@radix-ui/react-icons': '^1.3.2',
   '@radix-ui/react-slot': '^1.1.0',
   '@radix-ui/react-label': '^2.1.0',
   '@radix-ui/react-dialog': '^1.1.2',
@@ -43,6 +44,14 @@ const SHADCN_PEER_DEPS: Record<string, string> = {
   clsx: '^2.1.1',
   'tailwind-merge': '^2.5.4',
   'lucide-react': '^0.460.0',
+  cmdk: '^1.0.0',
+  vaul: '^1.1.0',
+  sonner: '^1.7.0',
+  'input-otp': '^1.4.1',
+  'react-day-picker': '^9.4.4',
+  'embla-carousel-react': '^8.5.1',
+  'react-resizable-panels': '^2.1.7',
+  recharts: '^2.15.0',
 };
 
 const starterTemplateSelectionPrompt = (templates: Template[]) => `
@@ -200,9 +209,9 @@ function injectShadcnPeerDeps(files: Array<{ name: string; path: string; content
         continue;
       }
 
-      // Match import statements for known peer deps
+      // Match import statements for known peer deps (Radix UI, utilities, and shadcn component deps)
       const importMatches = file.content.matchAll(
-        /from\s+['"](@radix-ui\/[^'"]+|class-variance-authority|clsx|tailwind-merge|lucide-react)['"]/g,
+        /from\s+['"](@radix-ui\/[^'"]+|class-variance-authority|clsx|tailwind-merge|lucide-react|cmdk|vaul|sonner|input-otp|react-day-picker|embla-carousel-react|react-resizable-panels|recharts)['"]/g,
       );
 
       for (const match of importMatches) {

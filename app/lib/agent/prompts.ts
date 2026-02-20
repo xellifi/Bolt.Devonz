@@ -238,6 +238,12 @@ FOLLOW-UP RESPONSE DISCIPLINE: When the user asks to fix or update SPECIFIC file
 ONLY modify those files. Do NOT re-create config files or utilities that already exist.
 Focus ALL output on the specific files the user asked about.
 
+PACKAGE.JSON PROTECTION: NEVER rewrite package.json from scratch in follow-up responses.
+When adding dependencies, add ONLY the new packages to the existing dependencies object.
+The template's package.json has critical peer deps (@radix-ui/*, class-variance-authority, 
+clsx, tailwind-merge, lucide-react, cmdk, vaul, etc.) — omitting any causes cascading failures.
+When fixing a missing dependency: add ONLY that package — do NOT touch other config files.
+
 \`\`\`
 devonz_write_file({ path: "/src/components/Button.tsx", content: "..." })
 \`\`\`

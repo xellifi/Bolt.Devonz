@@ -522,6 +522,13 @@ export const getFineTunedPrompt = (
     - Focus ALL output on the specific files the user asked about
     - If the user says "only update App.tsx", then ONLY include a single boltAction for App.tsx — no other files
     - NEVER waste tokens rewriting files that don't need changes
+
+  PACKAGE.JSON PROTECTION (CRITICAL):
+    - NEVER rewrite package.json from scratch in follow-up responses
+    - When adding dependencies, use a MINIMAL edit that adds ONLY the new packages to the existing "dependencies" object
+    - The template's package.json contains critical peer dependencies (@radix-ui/*, class-variance-authority, clsx, tailwind-merge, lucide-react, cmdk, vaul, etc.)
+    - If you rewrite package.json and omit any existing dependency, the build WILL fail with cascading import errors
+    - When fixing a missing dependency error: add ONLY that specific package — do NOT touch other config files
 </artifact_instructions>
 
 <design_instructions>
