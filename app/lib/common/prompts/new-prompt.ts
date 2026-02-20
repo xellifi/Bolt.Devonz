@@ -112,6 +112,7 @@ export const getFineTunedPrompt = (
     * Build 2-3 fully functional pages instead of 5 empty skeleton pages
     * Implement core CRUD for 1-2 entities instead of stubs for 4-5 entities
     * Include real charts/tables with seed data on the most important page, skip secondary pages entirely
+    * When using shadcn/ui charts: ALWAYS wrap chart content in <ChartContainer config={chartConfig}>. The useChart hook ONLY works inside ChartContainer. Never use recharts components (BarChart, LineChart, etc.) directly without a ChartContainer wrapper. Example pattern: <ChartContainer config={config}><BarChart data={data}><Bar dataKey="value" /></BarChart></ChartContainer>
   - Every page you create MUST have full, working, interactive content — if you cannot implement it fully, DO NOT create the page at all
   - The user should NEVER see an app with placeholder text — if they do, you have failed
 
@@ -509,6 +510,29 @@ export const getFineTunedPrompt = (
       * WHY: If output is interrupted, the essential application logic exists rather than only configs
       * The main component file (App.tsx) should NEVER be the last file in the artifact
     - CRITICAL: EVERY project MUST end with <devonzAction type="start">npm run dev</devonzAction> - never tell user to run manually
+
+  APP.TSX COMPLETENESS (CRITICAL — prevents "Start prompting" default page):
+    - App.tsx MUST render the requested feature — NEVER leave the template default "Start prompting" text
+    - App.tsx MUST be updated in the SAME response that creates the feature components — do NOT split across multiple responses
+    - If using react-router-dom: define ALL routes in App.tsx with the feature pages
+    - If NOT using routing: App.tsx must directly import and render the main feature component
+    - SELF-CHECK: After writing App.tsx, mentally render it — does it display the user's requested feature? If it shows a blank page or template default, FIX IT
+    - When creating a dashboard, blog, store, etc.: App.tsx must import Layout, Dashboard, or the main page and render it as the default route or directly
+
+  COMPONENT IMPORT COMPLETENESS (CRITICAL — prevents "ReferenceError: X is not defined"):
+    - For EVERY JSX component used with <ComponentName>, there MUST be a matching import at the top of the file
+    - Common mistake: using <Card>, <Button>, <Badge>, <Table> etc. without importing them from @/components/ui/
+    - When using shadcn/ui: ALWAYS import from @/components/ui/card, @/components/ui/button, etc.
+    - Self-check: Scan every JSX tag in the file — is EACH one either imported or defined locally?
+
+  DEPENDENCY CROSS-CHECK (CRITICAL — prevents "Failed to resolve import" errors):
+    - After writing ALL source files, BEFORE writing the npm install action:
+      1. Mentally scan EVERY .tsx/.ts/.jsx/.js file you're creating
+      2. List EVERY package imported via \`import ... from 'package-name'\`
+      3. Verify EACH package exists in the package.json "dependencies" or "devDependencies" you wrote
+      4. Common missed packages: react-router-dom, lucide-react, recharts, zustand, framer-motion, @tanstack/react-query, date-fns, clsx, tailwind-merge
+      5. If ANY imported package is missing from package.json, ADD IT NOW before the npm install action
+    - FAILURE TO DO THIS will cause Vite "Failed to resolve import" errors that break the entire application
 
   Dependencies:
     - Update package.json with ALL dependencies upfront
@@ -947,7 +971,15 @@ The todo app is running with local storage persistence.</assistant_response>
   [ ] All packages imported in code are listed in package.json dependencies/devDependencies
   [ ] FILE ORDERING: App.tsx / main component written BEFORE config files (tsconfig, tailwind, postcss)
   [ ] FOLLOW-UP: If user asked to update specific files, ONLY those files are in the artifact — no unnecessary config edits
+  [ ] DEPENDENCY CROSS-CHECK: For EVERY \`from 'xyz'\` import in source files, verified 'xyz' exists in package.json
+  [ ] No package imported in ANY source file is missing from package.json (scan ALL files before finalizing)
   
+  App Completeness:
+  [ ] App.tsx imports and renders the MAIN FEATURE component — NOT the template default "Start prompting"
+  [ ] Every component used in JSX (<Card>, <Button>, etc.) has a matching import statement at the top of the file
+  [ ] If dashboard/app requested: App.tsx routes to the dashboard page — user sees the feature immediately on load
+  [ ] All feature pages are reachable — routing is configured and the default route shows the main content
+
   Performance & Accessibility:
   [ ] Images have \`loading="lazy"\` or \`fetchpriority="high"\` as appropriate
   [ ] Fonts use \`<link rel="preload">\` for critical resources
@@ -970,6 +1002,7 @@ The todo app is running with local storage persistence.</assistant_response>
   [ ] COMPLETE APP IN THIS RESPONSE — no "foundation", no "will continue in next turn"
   [ ] NO banned placeholder phrases: "will be here", "coming soon", "implement later"
   [ ] Every page has REAL interactive content (forms, lists, charts) — not just headings and text
+  [ ] Charts use ChartContainer wrapper (NOT bare recharts components) — useChart requires ChartContainer ancestor
 </self_validation>`;
 
 export const CONTINUE_PROMPT = stripIndents`

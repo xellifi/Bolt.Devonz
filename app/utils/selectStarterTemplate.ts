@@ -57,10 +57,19 @@ const SHADCN_PEER_DEPS: Record<string, string> = {
 /**
  * Commonly used packages that LLMs frequently import.
  * Pre-installed to avoid auto-fix loops caused by missing dependencies.
+ * These are the top packages that cause import-resolution errors when missing.
  */
 const COMMON_EXTRA_PACKAGES: Record<string, string> = {
   'framer-motion': '^11.15.0',
   'lucide-react': '^0.460.0',
+  'react-router-dom': '^7.1.1',
+  zustand: '^5.0.3',
+  '@tanstack/react-query': '^5.62.16',
+  'date-fns': '^4.1.0',
+  axios: '^1.7.9',
+  'react-hook-form': '^7.54.2',
+  zod: '^3.24.1',
+  '@hookform/resolvers': '^3.9.1',
 };
 
 const starterTemplateSelectionPrompt = (templates: Template[]) => `

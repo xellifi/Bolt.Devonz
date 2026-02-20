@@ -460,6 +460,22 @@ export class ActionRunner {
       unreachable('Shell terminal not found');
     }
 
+    /*
+     * Pre-start dependency validation: Scan all source files for imported
+     * npm packages and ensure they exist in package.json. This catches cases
+     * where the LLM forgets to add a dependency (e.g. react-router-dom)
+     * which would otherwise cause a Vite import resolution error.
+     */
+    await this.#validateAndInstallMissingDeps();
+
+    /*
+     * Pre-start import validator: Scan all .tsx/.jsx files for JSX component
+     * references (e.g. <Card>) that are used but not imported. If found,
+     * auto-inject the missing import from shadcn/ui component library.
+     * This prevents ReferenceError crashes at runtime.
+     */
+    await this.#validateComponentImports();
+
     const shell = this.#shellTerminal();
     await shell.ready();
 
@@ -651,6 +667,498 @@ export class ActionRunner {
     } catch (error) {
       logger.error('Failed to write file\n\n', error);
       throw error; // Propagate so the action is marked as failed, not silently completed
+    }
+  }
+
+  /**
+   * Node.js built-in modules that should NOT be flagged as missing npm packages.
+   */
+  static #BUILTIN_MODULES = new Set([
+    'assert',
+    'buffer',
+    'child_process',
+    'cluster',
+    'console',
+    'constants',
+    'crypto',
+    'dgram',
+    'dns',
+    'domain',
+    'events',
+    'fs',
+    'http',
+    'http2',
+    'https',
+    'module',
+    'net',
+    'os',
+    'path',
+    'perf_hooks',
+    'process',
+    'punycode',
+    'querystring',
+    'readline',
+    'repl',
+    'stream',
+    'string_decoder',
+    'sys',
+    'timers',
+    'tls',
+    'tty',
+    'url',
+    'util',
+    'v8',
+    'vm',
+    'worker_threads',
+    'zlib',
+  ]);
+
+  /**
+   * Pre-start dependency validator.
+   *
+   * Scans all source files (.ts, .tsx, .js, .jsx) in the WebContainer
+   * for npm package imports and cross-references them against the
+   * dependencies listed in package.json. If any packages are imported
+   * but NOT listed in package.json, they are injected and `npm install`
+   * is run before the dev server starts.
+   *
+   * This is a critical safety net that catches cases where the LLM
+   * forgets to add a dependency (e.g. react-router-dom, lucide-react)
+   * which would otherwise cause a Vite import resolution error at runtime.
+   */
+  async #validateAndInstallMissingDeps(): Promise<void> {
+    try {
+      const webcontainer = await this.#webcontainer;
+
+      // Step 1: Read and parse package.json
+      let pkgContent: string;
+
+      try {
+        pkgContent = await webcontainer.fs.readFile('package.json', 'utf-8');
+      } catch {
+        logger.debug('No package.json found, skipping dependency validation');
+        return;
+      }
+
+      let pkgJson: Record<string, unknown>;
+
+      try {
+        pkgJson = JSON.parse(pkgContent);
+      } catch {
+        logger.warn('Failed to parse package.json, skipping dependency validation');
+        return;
+      }
+
+      const allDeps: Record<string, string> = {
+        ...((pkgJson.dependencies as Record<string, string>) || {}),
+        ...((pkgJson.devDependencies as Record<string, string>) || {}),
+      };
+
+      // Step 2: Recursively scan source files for imports
+      const missingPackages = new Set<string>();
+      const sourceExtensions = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts'];
+
+      /*
+       * Regex patterns for extracting npm package imports:
+       * - import ... from 'package'
+       * - import 'package'
+       * - require('package')
+       * - export ... from 'package'
+       * Excludes relative (./  ../) and absolute (/) imports.
+       */
+      const importRegex =
+        /(?:import\s+(?:[\s\S]*?\s+from\s+)?|require\s*\(\s*|export\s+[\s\S]*?\s+from\s+)['"]([^'"./][^'"]*)['"]/g;
+
+      const scanDirectory = async (dirPath: string, depth: number = 0): Promise<void> => {
+        // Safety: limit recursion depth to prevent runaway scanning
+        if (depth > 8) {
+          return;
+        }
+
+        let entries: Awaited<ReturnType<typeof webcontainer.fs.readdir>>;
+
+        try {
+          entries = await webcontainer.fs.readdir(dirPath, { withFileTypes: true });
+        } catch {
+          return; // Directory doesn't exist or can't be read
+        }
+
+        for (const entry of entries) {
+          const fullPath = dirPath === '.' ? entry.name : `${dirPath}/${entry.name}`;
+
+          if (entry.isDirectory()) {
+            // Skip directories that never contain project source
+            const skipDirs = ['node_modules', '.git', 'dist', 'build', '.next', '.cache', '.vite', 'coverage'];
+
+            if (!skipDirs.includes(entry.name)) {
+              await scanDirectory(fullPath, depth + 1);
+            }
+          } else if (sourceExtensions.some((ext) => entry.name.endsWith(ext))) {
+            try {
+              const content = await webcontainer.fs.readFile(fullPath, 'utf-8');
+              let match;
+
+              // Reset lastIndex for each file
+              importRegex.lastIndex = 0;
+
+              while ((match = importRegex.exec(content)) !== null) {
+                const importPath = match[1];
+
+                // Skip path aliases (e.g. @/lib/utils, ~/utils, #/types)
+                if (importPath.match(/^[@~#]\//)) {
+                  continue;
+                }
+
+                // Extract the package name (handle scoped packages like @radix-ui/react-dialog)
+                const pkgName = importPath
+                  .split('/')
+                  .slice(0, importPath.startsWith('@') ? 2 : 1)
+                  .join('/');
+
+                // Skip built-in Node.js modules and already-listed packages
+                if (!allDeps[pkgName] && !ActionRunner.#BUILTIN_MODULES.has(pkgName)) {
+                  missingPackages.add(pkgName);
+                }
+              }
+            } catch {
+              // Skip unreadable files
+            }
+          }
+        }
+      };
+
+      // Scan common project source directories
+      await scanDirectory('src');
+      await scanDirectory('app');
+      await scanDirectory('pages');
+      await scanDirectory('components');
+      await scanDirectory('lib');
+      await scanDirectory('utils');
+
+      // Also scan root-level source files (e.g. vite.config.ts, tailwind.config.ts)
+      try {
+        const rootEntries = await webcontainer.fs.readdir('.', { withFileTypes: true });
+
+        for (const entry of rootEntries) {
+          if (!entry.isDirectory() && sourceExtensions.some((ext) => entry.name.endsWith(ext))) {
+            try {
+              const content = await webcontainer.fs.readFile(entry.name, 'utf-8');
+              let match;
+              importRegex.lastIndex = 0;
+
+              while ((match = importRegex.exec(content)) !== null) {
+                const importPath = match[1];
+
+                // Skip path aliases (e.g. @/lib/utils, ~/utils, #/types)
+                if (importPath.match(/^[@~#]\//)) {
+                  continue;
+                }
+
+                const pkgName = importPath
+                  .split('/')
+                  .slice(0, importPath.startsWith('@') ? 2 : 1)
+                  .join('/');
+
+                if (!allDeps[pkgName] && !ActionRunner.#BUILTIN_MODULES.has(pkgName)) {
+                  missingPackages.add(pkgName);
+                }
+              }
+            } catch {
+              // Skip unreadable files
+            }
+          }
+        }
+      } catch {
+        // Root dir read failed
+      }
+
+      // Step 3: If missing packages found, inject into package.json and install
+      if (missingPackages.size > 0) {
+        const missing = [...missingPackages];
+        logger.info(`Dependency validator found ${missing.length} missing package(s): ${missing.join(', ')}`);
+
+        // Inject missing packages into package.json dependencies
+        const deps = (pkgJson.dependencies as Record<string, string>) || {};
+
+        for (const pkg of missing) {
+          deps[pkg] = 'latest';
+        }
+
+        pkgJson.dependencies = deps;
+
+        await webcontainer.fs.writeFile('package.json', JSON.stringify(pkgJson, null, 2));
+        logger.info('Updated package.json with missing dependencies');
+
+        // Run npm install to fetch the newly added packages
+        const shell = this.#shellTerminal();
+        await shell.ready();
+
+        const installResult = await shell.executeCommand(this.runnerId.get(), 'npm install --legacy-peer-deps', () => {
+          /* no-op: dependency validation install doesn't need abort */
+        });
+
+        if (installResult?.exitCode === 0) {
+          logger.info('npm install completed successfully after dependency validation');
+        } else {
+          logger.warn('npm install had non-zero exit code after dependency validation:', installResult?.exitCode);
+        }
+      } else {
+        logger.debug('Dependency validation passed: all imported packages are in package.json');
+      }
+    } catch (error) {
+      // Non-fatal: log and continue — the dev server will surface the real error
+      logger.error('Dependency validation failed (non-fatal):', error);
+    }
+  }
+
+  /**
+   * Pre-start import validator.
+   *
+   * Scans all generated .tsx files for JSX component references (e.g. <Card>)
+   * that are used but NOT imported. If found, auto-injects the missing import
+   * statement from the shadcn/ui component library (@/components/ui/).
+   *
+   * This prevents runtime ReferenceErrors like "Card is not defined" that
+   * occur when the LLM forgets to import a component it uses in JSX.
+   */
+  async #validateComponentImports(): Promise<void> {
+    try {
+      const webcontainer = await this.#webcontainer;
+
+      // Common shadcn/ui components and their import paths
+      const SHADCN_COMPONENTS: Record<string, string[]> = {
+        '@/components/ui/card': ['Card', 'CardHeader', 'CardTitle', 'CardDescription', 'CardContent', 'CardFooter'],
+        '@/components/ui/button': ['Button'],
+        '@/components/ui/input': ['Input'],
+        '@/components/ui/label': ['Label'],
+        '@/components/ui/badge': ['Badge'],
+        '@/components/ui/select': [
+          'Select',
+          'SelectContent',
+          'SelectItem',
+          'SelectTrigger',
+          'SelectValue',
+          'SelectGroup',
+        ],
+        '@/components/ui/dialog': [
+          'Dialog',
+          'DialogContent',
+          'DialogDescription',
+          'DialogFooter',
+          'DialogHeader',
+          'DialogTitle',
+          'DialogTrigger',
+        ],
+        '@/components/ui/table': ['Table', 'TableBody', 'TableCell', 'TableHead', 'TableHeader', 'TableRow'],
+        '@/components/ui/tabs': ['Tabs', 'TabsContent', 'TabsList', 'TabsTrigger'],
+        '@/components/ui/avatar': ['Avatar', 'AvatarFallback', 'AvatarImage'],
+        '@/components/ui/dropdown-menu': [
+          'DropdownMenu',
+          'DropdownMenuContent',
+          'DropdownMenuItem',
+          'DropdownMenuTrigger',
+          'DropdownMenuSeparator',
+          'DropdownMenuLabel',
+        ],
+        '@/components/ui/sheet': [
+          'Sheet',
+          'SheetContent',
+          'SheetDescription',
+          'SheetHeader',
+          'SheetTitle',
+          'SheetTrigger',
+        ],
+        '@/components/ui/toast': ['Toast', 'ToastAction'],
+        '@/components/ui/separator': ['Separator'],
+        '@/components/ui/scroll-area': ['ScrollArea', 'ScrollBar'],
+        '@/components/ui/skeleton': ['Skeleton'],
+        '@/components/ui/switch': ['Switch'],
+        '@/components/ui/textarea': ['Textarea'],
+        '@/components/ui/progress': ['Progress'],
+        '@/components/ui/tooltip': ['Tooltip', 'TooltipContent', 'TooltipProvider', 'TooltipTrigger'],
+        '@/components/ui/chart': [
+          'ChartContainer',
+          'ChartTooltip',
+          'ChartTooltipContent',
+          'ChartLegend',
+          'ChartLegendContent',
+        ],
+        '@/components/ui/form': [
+          'Form',
+          'FormControl',
+          'FormDescription',
+          'FormField',
+          'FormItem',
+          'FormLabel',
+          'FormMessage',
+        ],
+        '@/components/ui/checkbox': ['Checkbox'],
+        '@/components/ui/radio-group': ['RadioGroup', 'RadioGroupItem'],
+        '@/components/ui/slider': ['Slider'],
+        '@/components/ui/popover': ['Popover', 'PopoverContent', 'PopoverTrigger'],
+        '@/components/ui/alert': ['Alert', 'AlertDescription', 'AlertTitle'],
+        '@/components/ui/navigation-menu': [
+          'NavigationMenu',
+          'NavigationMenuContent',
+          'NavigationMenuItem',
+          'NavigationMenuLink',
+          'NavigationMenuList',
+          'NavigationMenuTrigger',
+        ],
+      };
+
+      // Build reverse lookup: component name → import path
+      const componentToPath: Record<string, string> = {};
+
+      for (const [importPath, components] of Object.entries(SHADCN_COMPONENTS)) {
+        for (const comp of components) {
+          componentToPath[comp] = importPath;
+        }
+      }
+
+      const sourceExtensions = ['.tsx', '.jsx'];
+
+      const scanAndFix = async (dirPath: string, depth: number = 0): Promise<void> => {
+        if (depth > 8) {
+          return;
+        }
+
+        let entries: Awaited<ReturnType<typeof webcontainer.fs.readdir>>;
+
+        try {
+          entries = await webcontainer.fs.readdir(dirPath, { withFileTypes: true });
+        } catch {
+          return;
+        }
+
+        for (const entry of entries) {
+          const fullPath = dirPath === '.' ? entry.name : `${dirPath}/${entry.name}`;
+
+          if (entry.isDirectory()) {
+            const skipDirs = ['node_modules', '.git', 'dist', 'build', '.next', '.cache', '.vite', 'coverage'];
+
+            if (!skipDirs.includes(entry.name)) {
+              await scanAndFix(fullPath, depth + 1);
+            }
+          } else if (sourceExtensions.some((ext) => entry.name.endsWith(ext))) {
+            try {
+              let content = await webcontainer.fs.readFile(fullPath, 'utf-8');
+
+              // Extract all existing imports (what's already imported)
+              const importedNames = new Set<string>();
+              const importRegex = /import\s+\{([^}]+)\}\s+from\s+['"][^'"]+['"]/g;
+              const defaultImportRegex = /import\s+(\w+)\s+from\s+['"][^'"]+['"]/g;
+              let m;
+
+              while ((m = importRegex.exec(content)) !== null) {
+                m[1].split(',').forEach((name) => {
+                  const trimmed = name
+                    .trim()
+                    .split(/\s+as\s+/)[0]
+                    .trim();
+
+                  if (trimmed) {
+                    importedNames.add(trimmed);
+                  }
+                });
+              }
+
+              while ((m = defaultImportRegex.exec(content)) !== null) {
+                importedNames.add(m[1]);
+              }
+
+              // Also count function/const declarations (locally defined components)
+              const declRegex = /(?:function|const|class|let|var)\s+(\w+)/g;
+
+              while ((m = declRegex.exec(content)) !== null) {
+                importedNames.add(m[1]);
+              }
+
+              // Find JSX component usage: <ComponentName or <ComponentName.Sub
+              const jsxRegex = /<([A-Z][a-zA-Z0-9]*)\b/g;
+              const usedComponents = new Set<string>();
+
+              while ((m = jsxRegex.exec(content)) !== null) {
+                const compName = m[1];
+
+                if (!importedNames.has(compName) && componentToPath[compName]) {
+                  usedComponents.add(compName);
+                }
+              }
+
+              if (usedComponents.size > 0) {
+                // Group by import path
+                const importsByPath: Record<string, string[]> = {};
+
+                for (const comp of usedComponents) {
+                  const path = componentToPath[comp];
+
+                  if (!importsByPath[path]) {
+                    importsByPath[path] = [];
+                  }
+
+                  importsByPath[path].push(comp);
+                }
+
+                // Build import statements
+                const newImports: string[] = [];
+
+                for (const [path, comps] of Object.entries(importsByPath)) {
+                  // Check if there's already an import from this path that we can extend
+                  const existingImportRegex = new RegExp(
+                    `import\\s+\\{([^}]+)\\}\\s+from\\s+['"]${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]`,
+                  );
+                  const existingMatch = content.match(existingImportRegex);
+
+                  if (existingMatch) {
+                    // Extend existing import
+                    const existingComps = existingMatch[1]
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean);
+                    const allComps = [...new Set([...existingComps, ...comps])].sort();
+                    const newImportLine = `import { ${allComps.join(', ')} } from '${path}'`;
+                    content = content.replace(existingMatch[0], newImportLine);
+                  } else {
+                    newImports.push(`import { ${comps.sort().join(', ')} } from '${path}'`);
+                  }
+                }
+
+                if (newImports.length > 0) {
+                  // Insert new imports after the last existing import statement
+                  const lastImportMatch = content.match(/^(import\s+.+(?:\n|$))+/m);
+
+                  if (lastImportMatch) {
+                    const insertPos = lastImportMatch.index! + lastImportMatch[0].length;
+                    content = content.slice(0, insertPos) + newImports.join('\n') + '\n' + content.slice(insertPos);
+                  } else {
+                    // No existing imports — add at top
+                    content = newImports.join('\n') + '\n\n' + content;
+                  }
+                }
+
+                await webcontainer.fs.writeFile(fullPath, content);
+                logger.info(
+                  `Import validator: Auto-injected ${usedComponents.size} missing import(s) in ${fullPath}: ${[...usedComponents].join(', ')}`,
+                );
+              }
+            } catch {
+              // Skip unreadable files
+            }
+          }
+        }
+      };
+
+      // Scan common project source directories
+      await scanAndFix('src');
+      await scanAndFix('app');
+      await scanAndFix('pages');
+      await scanAndFix('components');
+
+      logger.debug('Component import validation complete');
+    } catch (error) {
+      // Non-fatal: log and continue
+      logger.error('Component import validation failed (non-fatal):', error);
     }
   }
 
