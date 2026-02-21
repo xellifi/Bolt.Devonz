@@ -82,6 +82,7 @@ const ESSENTIAL_FILE_PATTERNS = [
   'app/root.tsx',
   'app/entry.client.tsx',
   'app/entry.server.tsx',
+  'app/routes/_index.tsx',
   'next.config.js',
   'next.config.ts',
   'next.config.mjs',
@@ -98,6 +99,7 @@ const ESSENTIAL_FILE_PATTERNS = [
   'src/app.html',
   'src/app.css',
   'src/app.d.ts',
+  'src/App.svelte',
 
   // Angular
   'angular.json',

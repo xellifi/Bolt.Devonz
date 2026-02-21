@@ -124,6 +124,22 @@ const SVELTE_COMBINED_PACKAGES: Record<string, string> = {
 };
 
 /**
+ * SolidJS-specific packages commonly used by LLMs.
+ * Only injected into SolidJS templates.
+ */
+const SOLIDJS_EXTRA_PACKAGES: Record<string, string> = {
+  '@solidjs/router': '^0.15.3',
+};
+
+/**
+ * Combined packages for SolidJS templates.
+ */
+const SOLIDJS_COMBINED_PACKAGES: Record<string, string> = {
+  ...UNIVERSAL_EXTRA_PACKAGES,
+  ...SOLIDJS_EXTRA_PACKAGES,
+};
+
+/**
  * Angular-specific packages commonly used by LLMs.
  */
 const ANGULAR_EXTRA_PACKAGES: Record<string, string> = {
@@ -150,16 +166,16 @@ const starterTemplateSelectionPrompt = (
 ) => `You pick the best starter template for a user's project. Respond ONLY with the XML selection — no explanation.
 
 Decision rules (in priority order):
-1. Trivial tasks (scripts, algorithms, CLI tools, simple logic, API-only) → blank
-2. Specific site type (portfolio, landing page, dashboard, SaaS, e-commerce) → matching showcase template if available, otherwise Vite Shadcn
-3. React project needing UI components → Vite Shadcn (preferred) or NextJS Shadcn (if SSR/fullstack needed)
-4. Game, canvas, 3D, or animation-heavy project → Vite React (lighter, no UI library overhead)
-5. Vue project → Vue
-6. Svelte project → Sveltekit
-7. Angular project → Angular
-8. Presentation/slides → Slidev
-9. Mobile app (iOS, Android, React Native) → Expo App
-10. Static site/blog/documentation → Basic Astro
+1. If the user explicitly names a framework (Vue, Svelte, Angular, SolidJS, Qwik, Remix, Astro, Expo), use that framework's template — this overrides rules 2-13.
+2. Trivial tasks (scripts, algorithms, CLI tools, API-only, no UI) → blank
+3. Game, canvas, WebGL, 3D (three.js), or animation-heavy → Vite React (lighter, no UI overhead)
+4. Presentation or slides → Slidev
+5. Mobile app (iOS, Android, React Native, cross-platform) → Expo App
+6. Static site, blog, or documentation → Basic Astro
+7. Vanilla/plain JavaScript (no framework) → Vanilla Vite
+8. TypeScript-only project (no UI framework) → Vite Typescript
+9. Fullstack React with SSR or API routes → NextJS Shadcn
+10. Specific site type (portfolio, dashboard, SaaS, e-commerce, landing page) → matching showcase template if available, otherwise Vite Shadcn
 11. Any other web project → Vite Shadcn as default
 
 Starter templates:
@@ -523,6 +539,40 @@ function injectAngularPackages(files: Array<{ name: string; path: string; conten
 }
 
 /**
+ * Inject SolidJS-specific + universal packages into SolidJS templates.
+ */
+function injectSolidPackages(files: Array<{ name: string; path: string; content: string }>): void {
+  const pkgJsonFile = files.find((f) => f.path === 'package.json' || f.name === 'package.json');
+
+  if (!pkgJsonFile) {
+    return;
+  }
+
+  try {
+    const pkgJson = JSON.parse(pkgJsonFile.content);
+    const deps = pkgJson.dependencies || {};
+    const devDeps = pkgJson.devDependencies || {};
+    const allExistingDeps = { ...deps, ...devDeps };
+    let injectedCount = 0;
+
+    for (const [pkg, version] of Object.entries(SOLIDJS_COMBINED_PACKAGES)) {
+      if (!allExistingDeps[pkg] && !deps[pkg]) {
+        deps[pkg] = version;
+        injectedCount++;
+      }
+    }
+
+    if (injectedCount > 0) {
+      pkgJson.dependencies = deps;
+      pkgJsonFile.content = JSON.stringify(pkgJson, null, 2);
+      logger.info(`Injected ${injectedCount} SolidJS + universal packages into template package.json`);
+    }
+  } catch (error) {
+    logger.error('Failed to inject SolidJS packages:', error);
+  }
+}
+
+/**
  * Detect template architecture from its files.
  * Returns a concise summary for the LLM to understand the project structure.
  */
@@ -540,6 +590,8 @@ function detectTemplateArchitecture(files: Array<{ name: string; path: string; c
     'src/routes/+page.svelte',
     'src/app/app.component.ts',
     'app/page.tsx',
+    'app/root.tsx',
+    'app/routes/_index.tsx',
     'pages/index.tsx',
     'src/main.tsx',
     'src/main.ts',
@@ -663,6 +715,16 @@ function isAngularFamily(templateName: string): boolean {
   return ANGULAR_TEMPLATE_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
+const SOLIDJS_TEMPLATE_KEYWORDS = ['solid', 'solidjs'];
+
+/**
+ * Returns true when `templateName` is a SolidJS framework.
+ */
+function isSolidFamily(templateName: string): boolean {
+  const lower = templateName.toLowerCase();
+  return SOLIDJS_TEMPLATE_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
 export async function getTemplates(templateName: string, title?: string) {
   /*
    * ——— Step 1: Resolve template by name (exact → fuzzy → showcase) ———
@@ -778,9 +840,11 @@ export async function getTemplates(templateName: string, title?: string) {
     injectSveltePackages(files);
   } else if (isAngularFamily(resolvedName)) {
     injectAngularPackages(files);
+  } else if (isSolidFamily(resolvedName)) {
+    injectSolidPackages(files);
   } else {
     /*
-     * All other templates (Astro, Solid, Qwik, Slidev, etc.)
+     * All other templates (Astro, Qwik, Slidev, etc.)
      * get framework-agnostic universal packages (date-fns, axios, zod)
      */
     injectUniversalPackages(files);
@@ -927,6 +991,8 @@ ${resolvedName.toLowerCase().includes('shadcn') ? `- Shadcn/ui template: All Rad
     availablePackageHint = Object.keys(SVELTE_COMBINED_PACKAGES).join(', ');
   } else if (isAngularFamily(resolvedName)) {
     availablePackageHint = Object.keys(ANGULAR_COMBINED_PACKAGES).join(', ');
+  } else if (isSolidFamily(resolvedName)) {
+    availablePackageHint = Object.keys(SOLIDJS_COMBINED_PACKAGES).join(', ');
   } else {
     availablePackageHint = Object.keys(UNIVERSAL_EXTRA_PACKAGES).join(', ');
   }
@@ -940,8 +1006,11 @@ ${resolvedName.toLowerCase().includes('shadcn') ? `- Shadcn/ui template: All Rad
     'src/App.tsx',
     'src/App.jsx',
     'src/App.vue',
+    'src/App.svelte',
     'src/routes/+page.svelte',
     'app/page.tsx',
+    'app/root.tsx',
+    'app/routes/_index.tsx',
     'pages/index.tsx',
     'src/app/app.component.ts',
     'src/main.tsx',
@@ -955,12 +1024,12 @@ Template "${displayName}" imported and running. All files are already created an
 ${archSummary ? `Architecture: ${archSummary}\n` : ''}${dirHint ? `Directories: ${dirHint}\n` : ''}Pre-installed packages (ready to import): ${availablePackageHint}.
 ${mainEntryFile ? `Primary file to modify: ${mainEntryFile}\n` : ''}
 RULES:
-1. MODIFY existing files to implement the feature — do NOT rewrite or recreate config files (vite.config, tsconfig, tailwind.config, package.json, etc.).
-2. Follow the template's existing directory structure and patterns. Place new components in the existing components directory.
-3. USE the pre-installed packages above. Do NOT install alternatives (e.g., use lucide-react not heroicons).
-4. Keep the template's styling approach (CSS modules, Tailwind, etc.) — do not switch frameworks.
-5. Build a COMPLETE, working application in a single response — no placeholders or "coming soon" pages.
-6. Do NOT run "npm install" again — dependencies are already installed. Only add install commands if you add NEW packages.
+1. MODIFY existing files — do NOT recreate config/entry files (vite.config, tsconfig, tailwind.config, package.json).
+2. Follow the existing directory structure. Place new components in the components directory.
+3. USE pre-installed packages. Do NOT install alternatives (e.g., use lucide-react not heroicons).
+4. Keep the template's styling approach intact — do not switch CSS frameworks.
+5. Build a COMPLETE working application — no placeholders, stubs, or "coming soon" pages.
+6. Only run npm install if adding NEW packages not already installed.
 `;
 
   return {
