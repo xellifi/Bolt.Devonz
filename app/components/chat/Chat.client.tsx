@@ -615,7 +615,7 @@ export const ChatImpl = memo(
                 {
                   id: `3-${new Date().getTime()}`,
                   role: 'user',
-                  content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userMessage}\n\nNow implement the following user request using the imported template above:\n${finalMessageContent}`,
+                  content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userMessage}\n\nThe template above is already imported and running. Implement the following user request by MODIFYING existing files and adding new ones as needed — do NOT recreate the project from scratch:\n${finalMessageContent}`,
                   annotations: ['hidden'],
                 },
               ]);

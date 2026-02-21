@@ -927,16 +927,32 @@ ${resolvedName.toLowerCase().includes('shadcn') ? `- Shadcn/ui template: Radix U
   const archSummary = detectTemplateArchitecture(filteredFiles);
   const dirHint = buildDirectoryHint(filteredFiles);
 
-  userMessage += `
-Template "${displayName}" imported and running.
-${archSummary ? `Architecture: ${archSummary}\n` : ''}${dirHint ? `Directories: ${dirHint}\n` : ''}Pre-installed packages (ready to import): ${availablePackageHint}.
+  // Detect the main entry point file the LLM should start modifying
+  const entryPointPriority = [
+    'src/App.tsx',
+    'src/App.jsx',
+    'src/App.vue',
+    'src/routes/+page.svelte',
+    'app/page.tsx',
+    'pages/index.tsx',
+    'src/app/app.component.ts',
+    'src/main.tsx',
+    'src/main.ts',
+  ];
+  const filePaths = filteredFiles.map((f) => f.path);
+  const mainEntryFile = entryPointPriority.find((ep) => filePaths.includes(ep));
 
+  userMessage += `
+Template "${displayName}" imported and running. All files are already created and installed — DO NOT recreate them.
+${archSummary ? `Architecture: ${archSummary}\n` : ''}${dirHint ? `Directories: ${dirHint}\n` : ''}Pre-installed packages (ready to import): ${availablePackageHint}.
+${mainEntryFile ? `Primary file to modify: ${mainEntryFile}\n` : ''}
 RULES:
-1. Edit only the files you need — preserve existing imports, exports, and structure.
+1. MODIFY existing files to implement the feature — do NOT rewrite or recreate config files (vite.config, tsconfig, tailwind.config, package.json, etc.).
 2. Follow the template's existing directory structure and patterns. Place new components in the existing components directory.
 3. USE the pre-installed packages above. Do NOT install alternatives (e.g., use lucide-react not heroicons).
 4. Keep the template's styling approach (CSS modules, Tailwind, etc.) — do not switch frameworks.
 5. Build a COMPLETE, working application in a single response — no placeholders or "coming soon" pages.
+6. Do NOT run "npm install" again — dependencies are already installed. Only add install commands if you add NEW packages.
 `;
 
   return {

@@ -85,6 +85,11 @@ const ESSENTIAL_FILE_PATTERNS = [
   'next.config.js',
   'next.config.ts',
   'next.config.mjs',
+  'app/layout.tsx',
+  'app/layout.jsx',
+  'app/page.tsx',
+  'app/page.jsx',
+  'app/globals.css',
 
   // SvelteKit
   'svelte.config.js',
@@ -110,6 +115,20 @@ const ESSENTIAL_FILE_PATTERNS = [
   'src/main.ts',
   'src/main.js',
   'nuxt.config.ts',
+
+  // Astro
+  'astro.config.mjs',
+  'astro.config.ts',
+  'src/pages/index.astro',
+
+  // Expo / React Native
+  'App.tsx',
+  'App.jsx',
+  'app.json',
+
+  // Qwik
+  'src/root.tsx',
+  'src/routes/index.tsx',
 ];
 
 function isEssentialFile(filePath: string): boolean {
@@ -117,9 +136,10 @@ function isEssentialFile(filePath: string): boolean {
 }
 
 /**
- * Simplify non-essential devonzAction file contents to "..." to reduce token usage.
+ * Simplify non-essential devonzAction file contents to reduce token usage.
  * Essential config/entry files keep their full content so the LLM understands the project structure.
  * Lock files are stripped entirely (they're huge and the LLM never needs them).
+ * Non-essential files are collapsed into a compact summary line listing their paths.
  */
 function simplifyTemplateActions(text: string): string {
   /* Strip lock files entirely — they can be 6000+ lines (~25K tokens) */
@@ -128,17 +148,34 @@ function simplifyTemplateActions(text: string): string {
     '',
   );
 
-  /* Replace non-essential file contents with "..." */
+  /* Collect non-essential file paths and remove their action blocks */
+  const nonEssentialPaths: string[] = [];
+
   result = result.replace(
     /(<devonzAction[^>]*type="file"[^>]*filePath="([^"]+)"[^>]*>)([\s\S]*?)(<\/devonzAction>)/g,
-    (match, openTag: string, filePath: string, _content: string, closeTag: string) => {
+    (match, _openTag: string, filePath: string, _content: string, _closeTag: string) => {
       if (isEssentialFile(filePath)) {
         return match;
       }
 
-      return `${openTag}...${closeTag}`;
+      nonEssentialPaths.push(filePath);
+
+      return '';
     },
   );
+
+  /* Append compact summary of non-essential files before closing artifact tag */
+  if (nonEssentialPaths.length > 0) {
+    const summary = `\n[Template includes ${nonEssentialPaths.length} additional pre-created files: ${nonEssentialPaths.join(', ')}]\n`;
+    const closingTag = '</devonzArtifact>';
+    const closingIdx = result.lastIndexOf(closingTag);
+
+    if (closingIdx !== -1) {
+      result = result.slice(0, closingIdx) + summary + result.slice(closingIdx);
+    } else {
+      result += summary;
+    }
+  }
 
   return result;
 }
