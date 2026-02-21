@@ -92,7 +92,7 @@ export const Workbench = memo(
     const canHideChat = showWorkbench || !showChat;
 
     // Sync PLAN.md content from project files into the plan store
-    usePlanSync(files);
+    usePlanSync();
 
     const isSmallViewport = useViewport(1024);
     const streaming = useStore(streamingState);

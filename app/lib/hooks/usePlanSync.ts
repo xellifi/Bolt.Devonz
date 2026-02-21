@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import type { FileMap } from '~/lib/stores/files';
 import { setPlan, resetPlan, planStore, type PlanTask } from '~/lib/stores/plan';
+import { useFileContent } from '~/lib/hooks/useFileContent';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('PlanSync');
@@ -53,19 +53,17 @@ export function parsePlanMd(content: string): { title: string | undefined; tasks
 }
 
 /**
- * Hook that watches the project files for PLAN.md and syncs its content
- * into the plan store. This bridges the LLM-created PLAN.md file with
- * the visual Plan component in the workbench.
- *
- * @param files - The FileMap from workbenchStore.files
+ * Hook that watches PLAN.md content via a computed selector and syncs
+ * it into the plan store. Uses useFileContent internally so callers
+ * don't need to pass the full FileMap — only the PLAN.md file content
+ * triggers re-renders.
  */
-export function usePlanSync(files: FileMap): void {
+export function usePlanSync(): void {
+  const planContent = useFileContent(PLAN_MD_PATH);
   const prevContentRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const planFile = files[PLAN_MD_PATH];
-
-    if (!planFile || planFile.type !== 'file') {
+    if (planContent === undefined) {
       // PLAN.md doesn't exist or was deleted — clear the plan if it was active
       if (prevContentRef.current !== null) {
         logger.info('PLAN.md removed — clearing plan');
@@ -76,7 +74,7 @@ export function usePlanSync(files: FileMap): void {
       return;
     }
 
-    const content = planFile.content;
+    const content = planContent;
 
     // Skip if content hasn't changed
     if (content === prevContentRef.current) {
@@ -114,5 +112,5 @@ export function usePlanSync(files: FileMap): void {
       logger.info(`PLAN.md updated — ${tasks.length} tasks, title: "${title ?? 'untitled'}"`);
       setPlan(tasks, title);
     }
-  }, [files]);
+  }, [planContent]);
 }

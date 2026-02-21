@@ -2,7 +2,7 @@ import { useStore } from '@nanostores/react';
 import type { Message } from 'ai';
 import { useChat } from '@ai-sdk/react';
 import { useAnimate } from 'framer-motion';
-import { memo, useCallback, useEffect, useRef, useState, startTransition } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import { toast } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
 import { description, useChatHistory } from '~/lib/persistence';
@@ -299,10 +299,10 @@ export const ChatImpl = memo(
         runAnimation();
         append({
           role: 'user',
-          content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${prompt}`,
+          content: `[Model: ${modelRef.current}]\n\n[Provider: ${providerRef.current.name}]\n\n${prompt}`,
         });
       }
-    }, [model, provider, searchParams]);
+    }, [searchParams]);
 
     const { enhancingPrompt, promptEnhanced, enhancePrompt, resetEnhancer } = usePromptEnhancer();
     const { parsedMessages, parseMessages } = useMessageParser();
@@ -852,6 +852,50 @@ export const ChatImpl = memo(
       Cookies.set('selectedProvider', newProvider.name, { expires: 30 });
     };
 
+    const handleStreamingChange = useCallback((streaming: boolean) => {
+      streamingState.set(streaming);
+    }, []);
+
+    const handleInputChangeWrapped = useCallback(
+      (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        onTextareaChange(e);
+        debouncedCachePrompt(e);
+      },
+      [onTextareaChange, debouncedCachePrompt],
+    );
+
+    const handleEnhancePrompt = useCallback(() => {
+      enhancePrompt(
+        input,
+        (enhancedInput: string) => {
+          setInput(enhancedInput);
+          scrollTextArea();
+        },
+        model,
+        provider,
+        apiKeys,
+      );
+    }, [input, enhancePrompt, setInput, scrollTextArea, model, provider, apiKeys]);
+
+    const handleClearAlert = useCallback(() => workbenchStore.clearAlert(), []);
+    const handleClearSupabaseAlert = useCallback(() => workbenchStore.clearSupabaseAlert(), []);
+    const handleClearDeployAlert = useCallback(() => workbenchStore.clearDeployAlert(), []);
+
+    const processedMessages = useMemo(
+      () =>
+        messages.map((message, i) => {
+          if (message.role === 'user') {
+            return message;
+          }
+
+          return {
+            ...message,
+            content: parsedMessages[i] || '',
+          };
+        }),
+      [messages, parsedMessages],
+    );
+
     const handleWebSearchResult = useCallback(
       (result: string) => {
         const currentInput = input || '';
@@ -874,9 +918,7 @@ export const ChatImpl = memo(
         showChat={showChat}
         chatStarted={chatStarted}
         isStreaming={isLoading || fakeLoading}
-        onStreamingChange={(streaming) => {
-          streamingState.set(streaming);
-        }}
+        onStreamingChange={handleStreamingChange}
         enhancingPrompt={enhancingPrompt}
         promptEnhanced={promptEnhanced}
         sendMessage={sendMessage}
@@ -885,46 +927,23 @@ export const ChatImpl = memo(
         provider={provider}
         setProvider={handleProviderChange}
         providerList={activeProviders}
-        handleInputChange={(e) => {
-          onTextareaChange(e);
-          debouncedCachePrompt(e);
-        }}
+        handleInputChange={handleInputChangeWrapped}
         handleStop={abort}
         description={description}
         importChat={importChat}
         exportChat={exportChat}
-        messages={messages.map((message, i) => {
-          if (message.role === 'user') {
-            return message;
-          }
-
-          return {
-            ...message,
-            content: parsedMessages[i] || '',
-          };
-        })}
-        enhancePrompt={() => {
-          enhancePrompt(
-            input,
-            (input) => {
-              setInput(input);
-              scrollTextArea();
-            },
-            model,
-            provider,
-            apiKeys,
-          );
-        }}
+        messages={processedMessages}
+        enhancePrompt={handleEnhancePrompt}
         uploadedFiles={uploadedFiles}
         setUploadedFiles={setUploadedFiles}
         imageDataList={imageDataList}
         setImageDataList={setImageDataList}
         actionAlert={actionAlert}
-        clearAlert={() => workbenchStore.clearAlert()}
+        clearAlert={handleClearAlert}
         supabaseAlert={supabaseAlert}
-        clearSupabaseAlert={() => workbenchStore.clearSupabaseAlert()}
+        clearSupabaseAlert={handleClearSupabaseAlert}
         deployAlert={deployAlert}
-        clearDeployAlert={() => workbenchStore.clearDeployAlert()}
+        clearDeployAlert={handleClearDeployAlert}
         llmErrorAlert={llmErrorAlert}
         clearLlmErrorAlert={clearApiErrorAlert}
         data={chatData}
