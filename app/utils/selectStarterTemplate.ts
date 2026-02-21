@@ -322,10 +322,10 @@ function injectShadcnPeerDeps(files: Array<{ name: string; path: string; content
         continue;
       }
 
-      // Match import statements for known peer deps (Radix UI, utilities, and shadcn component deps)
-      const importMatches = file.content.matchAll(
-        /from\s+['"](@radix-ui\/[^'"]+|class-variance-authority|clsx|tailwind-merge|lucide-react|cmdk|vaul|sonner|input-otp|react-day-picker|embla-carousel-react|react-resizable-panels|recharts)['"]/g,
-      );
+      // Match import/require statements for known peer deps (Radix UI, utilities, and shadcn component deps)
+      const peerDepPattern =
+        /(?:from\s+|require\s*\(\s*)['"](@radix-ui\/[^'"]+|class-variance-authority|clsx|tailwind-merge|lucide-react|cmdk|vaul|sonner|input-otp|react-day-picker|embla-carousel-react|react-resizable-panels|recharts|tailwindcss-animate)['"]/g;
+      const importMatches = file.content.matchAll(peerDepPattern);
 
       for (const match of importMatches) {
         usedPackages.add(match[1]);
