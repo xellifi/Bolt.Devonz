@@ -843,10 +843,19 @@ ${resolvedName.toLowerCase().includes('shadcn') ? `- Shadcn/ui template: All Rad
   const cnUtilityPaths = ['src/lib/utils.ts', 'lib/utils.ts', 'src/utils.ts', 'utils/cn.ts'];
   const cnUtilityFile = cnUtilityPaths.find((p) => filePaths.includes(p));
 
+  // Detect pre-built shadcn/ui components so the LLM uses them instead of recreating
+  const shadcnComponentDirs = ['src/components/ui/', 'components/ui/'];
+  const shadcnDir = shadcnComponentDirs.find((d) => filePaths.some((fp) => fp.startsWith(d)));
+  const shadcnComponents = shadcnDir
+    ? filePaths
+        .filter((fp) => fp.startsWith(shadcnDir) && fp.endsWith('.tsx'))
+        .map((fp) => fp.slice(shadcnDir.length, -4))
+    : [];
+
   userMessage += `
 Template "${displayName}" imported and running. All files are already created and installed — DO NOT recreate them.
 ${archSummary ? `Architecture: ${archSummary}\n` : ''}${dirHint ? `Directories: ${dirHint}\n` : ''}Pre-installed packages (ready to import): ${availablePackageHint}.
-${mainEntryFile ? `Primary file to modify: ${mainEntryFile}\n` : ''}${cnUtilityFile ? `Class utility: import { cn } from '${cnUtilityFile.startsWith('src/') ? `@/${cnUtilityFile.slice(4, -3)}` : `./${cnUtilityFile.slice(0, -3)}`}' — use cn() for conditional class merging.\n` : ''}`;
+${mainEntryFile ? `Primary file to modify: ${mainEntryFile}\n` : ''}${cnUtilityFile ? `Class utility: import { cn } from '${cnUtilityFile.startsWith('src/') ? `@/${cnUtilityFile.slice(4, -3)}` : `./${cnUtilityFile.slice(0, -3)}`}' — use cn() for conditional class merging.\n` : ''}${shadcnComponents.length > 0 ? `Pre-built shadcn/ui components (import from ${shadcnDir}): ${shadcnComponents.join(', ')}. Use these directly — do NOT recreate them.\n` : ''}`;
 
   /*
    * Add framework-specific coding hints for non-React frameworks
