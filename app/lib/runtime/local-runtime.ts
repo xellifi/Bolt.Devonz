@@ -344,6 +344,9 @@ export class LocalRuntime implements RuntimeProvider {
   /**
    * Kill all terminal sessions and reset port detection.
    * Used on client reconnect to clean up orphaned processes from previous page loads.
+   *
+   * Waits for each process to fully exit so that ports are released
+   * before the caller spawns new sessions.
    */
   async cleanSessions(): Promise<void> {
     if (this.#sessions.size === 0) {
@@ -352,10 +355,49 @@ export class LocalRuntime implements RuntimeProvider {
 
     logger.info(`Cleaning ${this.#sessions.size} orphaned session(s) for "${this.#projectId}"`);
 
+    const EXIT_TIMEOUT_MS = 5_000;
+    const exitPromises: Array<Promise<void>> = [];
+
     for (const [id, session] of this.#sessions) {
-      killProcessTree(session.process);
+      const proc = session.process;
+
+      /*
+       * Build a promise that resolves once the process has fully exited
+       * (stdio closed, ports released). If exit already happened, resolve
+       * immediately. A timeout prevents blocking forever.
+       */
+      const exitPromise = new Promise<void>((resolve) => {
+        if (proc.exitCode !== null) {
+          resolve();
+
+          return;
+        }
+
+        let done = false;
+
+        const finish = () => {
+          if (!done) {
+            done = true;
+            clearTimeout(timer);
+            resolve();
+          }
+        };
+
+        proc.once('close', finish);
+
+        const timer = setTimeout(() => {
+          logger.warn(`Session ${id} did not exit within ${EXIT_TIMEOUT_MS}ms — proceeding`);
+          finish();
+        }, EXIT_TIMEOUT_MS);
+      });
+
+      exitPromises.push(exitPromise);
+      killProcessTree(proc);
       logger.debug(`Killed orphaned session ${id}`);
     }
+
+    // Wait for all processes to exit so ports are released
+    await Promise.all(exitPromises);
 
     this.#sessions.clear();
     this.#detectedPorts.clear();
