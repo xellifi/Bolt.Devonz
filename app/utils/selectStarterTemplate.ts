@@ -58,21 +58,35 @@ const SHADCN_PEER_DEPS: Record<string, string> = {
 };
 
 /**
- * Commonly used packages that LLMs frequently import.
+ * Universal packages that LLMs frequently import across any framework.
  * Pre-installed to avoid auto-fix loops caused by missing dependencies.
- * These are the top packages that cause import-resolution errors when missing.
  */
-const COMMON_EXTRA_PACKAGES: Record<string, string> = {
+const UNIVERSAL_EXTRA_PACKAGES: Record<string, string> = {
+  'date-fns': '^4.1.0',
+  axios: '^1.7.9',
+  zod: '^3.24.1',
+};
+
+/**
+ * React-specific packages that LLMs frequently import in React projects.
+ * Only injected into React-family templates (React, Next, Remix, Shadcn).
+ */
+const REACT_EXTRA_PACKAGES: Record<string, string> = {
   'framer-motion': '^11.15.0',
   'lucide-react': '^0.460.0',
   'react-router-dom': '^7.1.1',
   zustand: '^5.0.3',
   '@tanstack/react-query': '^5.62.16',
-  'date-fns': '^4.1.0',
-  axios: '^1.7.9',
   'react-hook-form': '^7.54.2',
-  zod: '^3.24.1',
   '@hookform/resolvers': '^3.9.1',
+};
+
+/**
+ * Combined common packages for React-family templates.
+ */
+const COMMON_EXTRA_PACKAGES: Record<string, string> = {
+  ...UNIVERSAL_EXTRA_PACKAGES,
+  ...REACT_EXTRA_PACKAGES,
 };
 
 interface PromptTemplate {
@@ -362,19 +376,67 @@ function injectCommonPackages(files: Array<{ name: string; path: string; content
 }
 
 /**
- * Frameworks / libraries whose templates should get COMMON_EXTRA_PACKAGES
- * injected into package.json. Matched case-insensitively against the
- * template name so that "Vite React", "NextJS Shadcn", etc. all qualify.
+ * Inject only framework-agnostic universal packages (date-fns, axios, zod)
+ * into non-React JSX templates like SolidJS and Qwik. Avoids adding
+ * React-specific dependencies that would be unused and confusing.
  */
-const REACT_TEMPLATE_KEYWORDS = ['react', 'next', 'remix', 'shadcn', 'solid', 'qwik'];
+function injectUniversalPackages(files: Array<{ name: string; path: string; content: string }>): void {
+  const pkgJsonFile = files.find((f) => f.path === 'package.json' || f.name === 'package.json');
+
+  if (!pkgJsonFile) {
+    return;
+  }
+
+  try {
+    const pkgJson = JSON.parse(pkgJsonFile.content);
+    const deps = pkgJson.dependencies || {};
+    const devDeps = pkgJson.devDependencies || {};
+    const allExistingDeps = { ...deps, ...devDeps };
+    let injectedCount = 0;
+
+    for (const [pkg, version] of Object.entries(UNIVERSAL_EXTRA_PACKAGES)) {
+      if (!allExistingDeps[pkg] && !deps[pkg]) {
+        deps[pkg] = version;
+        injectedCount++;
+      }
+    }
+
+    if (injectedCount > 0) {
+      pkgJson.dependencies = deps;
+      pkgJsonFile.content = JSON.stringify(pkgJson, null, 2);
+      logger.info(`Injected ${injectedCount} universal packages into template package.json`);
+    }
+  } catch (error) {
+    logger.error('Failed to inject universal packages:', error);
+  }
+}
 
 /**
- * Returns true when `templateName` belongs to a React-family framework
- * that benefits from pre-installed common packages.
+ * Frameworks whose templates should get full COMMON_EXTRA_PACKAGES
+ * (React-specific + universal) injected into package.json.
+ */
+const REACT_TEMPLATE_KEYWORDS = ['react', 'next', 'remix', 'shadcn'];
+
+/**
+ * Returns true when `templateName` is a React-family framework.
  */
 function isReactFamily(templateName: string): boolean {
   const lower = templateName.toLowerCase();
   return REACT_TEMPLATE_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+/**
+ * Frameworks that use JSX but are NOT React (Solid, Qwik).
+ * These get only universal packages injected  — no React-specific deps.
+ */
+const JSX_NON_REACT_KEYWORDS = ['solid', 'qwik'];
+
+/**
+ * Returns true when `templateName` is a JSX framework that is NOT React.
+ */
+function isJsxNonReact(templateName: string): boolean {
+  const lower = templateName.toLowerCase();
+  return JSX_NON_REACT_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
 export async function getTemplates(templateName: string, title?: string) {
@@ -475,13 +537,16 @@ export async function getTemplates(templateName: string, title?: string) {
 
   /*
    * ——— Step 3: Inject dependencies ———
-   * - Shadcn templates: inject peer deps + common packages
-   * - Other React-family templates: inject common packages only
+   * - Shadcn templates: inject peer deps + React common + universal packages
+   * - Other React-family templates: inject React common + universal packages
+   * - JSX non-React (Solid, Qwik): inject universal packages only
    */
   if (resolvedName.toLowerCase().includes('shadcn')) {
     injectShadcnPeerDeps(files);
   } else if (isReactFamily(resolvedName)) {
     injectCommonPackages(files);
+  } else if (isJsxNonReact(resolvedName)) {
+    injectUniversalPackages(files);
   }
 
   let filteredFiles = files;
@@ -493,15 +558,9 @@ export async function getTemplates(templateName: string, title?: string) {
   filteredFiles = filteredFiles.filter((x) => x.path.startsWith('.git') == false);
 
   /*
-   * exclude    lock files
-   * WE NOW INCLUDE LOCK FILES FOR IMPROVED INSTALL TIMES
+   * Lock files are included for faster npm install times.
+   * Previously excluded, now kept intentionally.
    */
-  {
-    /*
-     *const comminLockFiles = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'];
-     *filteredFiles = filteredFiles.filter((x) => comminLockFiles.includes(x.name) == false);
-     */
-  }
 
   // exclude    .devonz
   filteredFiles = filteredFiles.filter((x) => x.path.startsWith('.devonz') == false);
@@ -585,71 +644,55 @@ If you need to make changes to functionality, create new files instead of modify
   }
 
   /*
-   * For shadcn templates, extract the template dependencies and add
-   * explicit instructions to preserve them. This prevents the LLM from
-   * rewriting package.json from scratch and dropping critical deps like
-   * @radix-ui/*, class-variance-authority, etc. which causes cascading
-   * auto-fix loops.
+   * Dependency preservation instructions — apply to ALL templates.
+   * Prevents the LLM from rewriting package.json and dropping critical deps.
    */
-  if (resolvedName.toLowerCase().includes('shadcn')) {
-    const pkgFile = files.find((f) => f.path === 'package.json' || f.name === 'package.json');
+  const pkgFile = files.find((f) => f.path === 'package.json' || f.name === 'package.json');
 
-    if (pkgFile) {
-      try {
-        const pkgJson = JSON.parse(pkgFile.content);
-        const deps = Object.keys(pkgJson.dependencies || {});
+  if (pkgFile) {
+    try {
+      const pkgJson = JSON.parse(pkgFile.content);
+      const depCount = Object.keys(pkgJson.dependencies || {}).length;
 
-        // Detect Tailwind CSS version from devDependencies
-        const tailwindVersion = pkgJson.devDependencies?.tailwindcss || '';
-        const isTailwindV3 =
-          tailwindVersion.startsWith('^3') || tailwindVersion.startsWith('~3') || tailwindVersion.startsWith('3');
+      // Detect Tailwind CSS version from devDependencies
+      const tailwindVersion = pkgJson.devDependencies?.tailwindcss || '';
+      const isTailwindV3 =
+        tailwindVersion.startsWith('^3') || tailwindVersion.startsWith('~3') || tailwindVersion.startsWith('3');
 
-        userMessage += `
+      userMessage += `
 ---
-⚠️ CRITICAL: PACKAGE.JSON DEPENDENCY RULES ⚠️
-
-The template package.json already contains ALL required dependencies for shadcn/ui,
-Radix UI primitives, and utility libraries. These are MANDATORY for the project to work.
-
-RULES:
-1. NEVER rewrite package.json from scratch
-2. If you need to modify package.json, ONLY ADD new dependencies — keep ALL existing ones
-3. The following ${deps.length} dependencies MUST remain in package.json:
-${deps.map((d) => `   - ${d}`).join('\n')}
-
-If you rewrite package.json without these dependencies, the build WILL fail with
-missing module errors and require multiple fix attempts.
-
-When modifying package.json, start from the existing file content and only add what you need.
+⚠️ PACKAGE.JSON RULES:
+- The template has ${depCount} pre-configured dependencies. NEVER rewrite package.json from scratch.
+- To change dependencies, ADD new ones — keep ALL existing.
+- Start from existing file content when modifying package.json.
+${
+  resolvedName.toLowerCase().includes('shadcn')
+    ? `- This is a shadcn/ui template — Radix UI primitives and peer deps are MANDATORY.`
+    : ''
+}
 ${
   isTailwindV3
-    ? `
-⚠️ TAILWIND CSS VERSION: This template uses Tailwind CSS v3.
-- Use \`@tailwind base; @tailwind components; @tailwind utilities;\` directives in CSS files
-- Do NOT use the Tailwind CSS v4 \`@import "tailwindcss";\` syntax — it will cause PostCSS parse errors
-`
+    ? `- Tailwind CSS v3: use \`@tailwind base; @tailwind components; @tailwind utilities;\` — NOT the v4 \`@import "tailwindcss";\` syntax.`
     : ''
 }
 ---
 `;
-      } catch {
-        // Failed to parse package.json, skip dep preservation instructions
-      }
+    } catch {
+      // Failed to parse package.json, skip dep preservation instructions
     }
   }
 
   userMessage += `
 ---
-template import is done, and you can now use the imported files,
-edit only the files that need to be changed, and you can create new files as needed.
-NEVER REWRITE FILES THAT ALREADY EXIST unless you need to change their content.
-When modifying existing files, preserve all existing functionality and dependencies.
----
-Now that the Template is imported please continue with my original request
+Template "${displayName}" is now imported. Ready to build.
 
-IMPORTANT: Dependencies are already being installed and the dev server will start automatically.
-Do NOT include \`npm install\`, \`npm run dev\`, or any Start Application / shell commands in your response.
-Just focus on creating or modifying the source files needed to fulfill the user's request.
+RULES:
+1. Modify only the files you need to change. Do NOT rewrite files unnecessarily.
+2. Preserve existing imports, exports, and functionality when editing files.
+3. Dependencies are installing automatically — do NOT run \`npm install\` or \`npm run dev\`.
+4. Focus on creating/modifying source files to fulfill the user's request.
+5. When adding new components, use the template's existing patterns and conventions.
+---
 `;
 
   return {

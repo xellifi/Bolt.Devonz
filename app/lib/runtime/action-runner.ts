@@ -388,6 +388,26 @@ export class ActionRunner {
 
     // --- Step 3: Direct execution (staging disabled) ---
 
+    /*
+     * Optimisation: Route `npm install` and `npm ci` commands through
+     * runtime.exec() instead of the interactive terminal. This is more reliable
+     * because it uses child_process.exec on the server — no marker-based
+     * detection, no terminal contention with the dev server, and proper exit codes.
+     */
+    if (/^npm\s+(install|ci)\b/i.test(action.content.trim())) {
+      logger.info(`Running npm install via runtime.exec: ${action.content.substring(0, 60)}`);
+
+      const runtime = await this.#runtime;
+      const result = await this.#execNpmInstall(runtime, action.content);
+
+      if (result.exitCode !== 0) {
+        const enhancedError = this.#createEnhancedShellError(action.content, result.exitCode, result.output);
+        throw new ActionCommandError(enhancedError.title, enhancedError.details);
+      }
+
+      return;
+    }
+
     const shell = this.#shellTerminal();
     await shell.ready();
 
@@ -690,18 +710,26 @@ export class ActionRunner {
   }
 
   /**
-   * Run `npm install --legacy-peer-deps` via the server-side runtime exec API.
+   * Run an npm install command via the server-side runtime exec API.
    *
    * This bypasses the interactive terminal entirely, using `child_process.exec`
    * on the server. Much more reliable than the marker-based DevonzShell approach
    * because it doesn't contend with the dev-server shell session.
    *
    * Retries up to 3 times with exponential backoff (1s, 2s, 4s) on failure.
+   *
+   * @param runtime   The runtime provider (local or remote)
+   * @param command   The npm install command to run (default: `npm install --legacy-peer-deps`)
+   * @param retries   Max retry attempts
    */
-  async #execNpmInstall(runtime: RuntimeProvider, retries = 3): Promise<ProcessResult> {
+  async #execNpmInstall(
+    runtime: RuntimeProvider,
+    command = 'npm install --legacy-peer-deps',
+    retries = 3,
+  ): Promise<ProcessResult> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        const result = await runtime.exec('npm install --legacy-peer-deps');
+        const result = await runtime.exec(command);
 
         if (result.exitCode === 0 || attempt === retries) {
           return result;
@@ -735,6 +763,7 @@ export class ActionRunner {
    */
   static #BUILTIN_MODULES = new Set([
     'assert',
+    'async_hooks',
     'buffer',
     'child_process',
     'cluster',
@@ -742,6 +771,7 @@ export class ActionRunner {
     'constants',
     'crypto',
     'dgram',
+    'diagnostics_channel',
     'dns',
     'domain',
     'events',
@@ -749,6 +779,7 @@ export class ActionRunner {
     'http',
     'http2',
     'https',
+    'inspector',
     'module',
     'net',
     'os',
@@ -762,13 +793,16 @@ export class ActionRunner {
     'stream',
     'string_decoder',
     'sys',
+    'test',
     'timers',
     'tls',
+    'trace_events',
     'tty',
     'url',
     'util',
     'v8',
     'vm',
+    'wasi',
     'worker_threads',
     'zlib',
   ]);
@@ -869,6 +903,11 @@ export class ActionRunner {
                   continue;
                 }
 
+                // Skip Node.js built-in imports with node: prefix (e.g. 'node:fs')
+                if (importPath.startsWith('node:')) {
+                  continue;
+                }
+
                 // Extract the package name (handle scoped packages like @radix-ui/react-dialog)
                 const pkgName = importPath
                   .split('/')
@@ -911,6 +950,11 @@ export class ActionRunner {
 
                 // Skip path aliases (e.g. @/lib/utils, ~/utils, #/types)
                 if (importPath.match(/^[@~#]\//)) {
+                  continue;
+                }
+
+                // Skip Node.js built-in imports with node: prefix (e.g. 'node:fs')
+                if (importPath.startsWith('node:')) {
                   continue;
                 }
 
