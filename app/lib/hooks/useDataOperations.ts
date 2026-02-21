@@ -737,7 +737,7 @@ export function useDataOperations({
 
         const newKeys = ImportExportService.importAPIKeys(importedData);
         const apiKeysJson = JSON.stringify(newKeys);
-        document.cookie = `apiKeys=${apiKeysJson}; path=/; max-age=31536000; SameSite=Strict`;
+        document.cookie = `apiKeys=${encodeURIComponent(apiKeysJson)}; path=/; max-age=31536000; SameSite=Strict`;
 
         // Step 5: Complete
         showProgress('Completing import', 100);
@@ -1182,7 +1182,7 @@ export function useDataOperations({
           const previousAPIKeys = lastOperation.data.previous as Record<string, unknown>;
           const newKeys = ImportExportService.importAPIKeys(previousAPIKeys);
           const apiKeysJson = JSON.stringify(newKeys);
-          document.cookie = `apiKeys=${apiKeysJson}; path=/; max-age=31536000; SameSite=Strict`;
+          document.cookie = `apiKeys=${encodeURIComponent(apiKeysJson)}; path=/; max-age=31536000; SameSite=Strict`;
 
           // Dismiss progress toast before showing success toast
           toast.dismiss('progress-toast');
