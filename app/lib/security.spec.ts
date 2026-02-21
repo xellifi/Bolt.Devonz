@@ -135,7 +135,7 @@ describe('security', () => {
       expect(csp).toContain("default-src 'self'");
       expect(csp).toContain("script-src 'self'");
       expect(csp).toContain("style-src 'self'");
-      expect(csp).toContain("frame-src 'none'");
+      expect(csp).toContain("frame-src 'self' http://localhost:*");
       expect(csp).toContain("object-src 'none'");
     });
 
