@@ -194,7 +194,7 @@ More efficient than devonz_write_file for small changes (saves tokens).
   * Preferred: use named imports from 'react' — import { lazy, Suspense, memo } from 'react' — instead of React.X namespace access
 - Tailwind CSS v4: use @import "tailwindcss" and @theme block (NOT @tailwind directives)
 - PREFER shadcn/ui with customized design tokens
-- Vite 7 for web servers
+- Vite 6 for web servers
 - Use Pexels for stock photos (valid URLs only). NEVER use Unsplash.
 - Supabase for databases by default
 
