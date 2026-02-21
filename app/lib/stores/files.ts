@@ -705,7 +705,17 @@ export class FilesStore {
   async #processWatchEvents(events: WatchEvent[]) {
     for (const event of events) {
       /* Remove any trailing slashes */
-      const sanitizedPath = event.path.replace(/\/+$/g, '');
+      let sanitizedPath = event.path.replace(/\/+$/g, '');
+
+      /*
+       * Ensure paths use the WORK_DIR prefix expected by the FileTree.
+       * Server-side watch events emit paths relative to the project root
+       * (e.g. `src/App.tsx`), but the file map and FileTree use
+       * WORK_DIR-prefixed paths (e.g. `/home/project/src/App.tsx`).
+       */
+      if (!sanitizedPath.startsWith(WORK_DIR)) {
+        sanitizedPath = `${WORK_DIR}/${sanitizedPath}`;
+      }
 
       // Skip node_modules and .git — handled server-side too, but belt-and-suspenders
       if (sanitizedPath.includes('node_modules') || sanitizedPath.includes('.git')) {

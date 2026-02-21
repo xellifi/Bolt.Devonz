@@ -110,11 +110,11 @@ async function fsLoader({ request }: LoaderFunctionArgs) {
       try {
         const stat = await runtime.fs.stat(filePath);
         return json(stat);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Stat failed';
+      } catch {
         logger.debug(`stat not found: ${filePath}`);
 
-        return json({ error: message }, { status: 404 });
+        // Return 204 instead of 404 to avoid browser console noise
+        return new Response(null, { status: 204 });
       }
     }
 

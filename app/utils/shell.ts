@@ -298,21 +298,38 @@ export class DevonzShell {
    * Strip internal shell mechanics from terminal output so users
    * only see meaningful command output. Removes:
    * - Marker echo suffixes from command lines (e.g. `; echo "__DEVONZ_CMD_DONE__..."`).
+   * - Standalone echo commands for markers (e.g. `$ echo "__DEVONZ_CMD_DONE___READY"`).
    * - Standalone marker output lines.
+   * - Common bash startup noise (ioctl warnings, no job control).
    */
   #filterInternalNoise(data: string): string {
-    if (!data.includes(MARKER_PREFIX)) {
+    const hasMarker = data.includes(MARKER_PREFIX);
+    const hasBashNoise =
+      data.includes('bash: cannot set terminal process group') || data.includes('bash: no job control');
+
+    if (!hasMarker && !hasBashNoise) {
       return data;
     }
 
-    /* Strip the marker echo suffix appended to commands */
-    let filtered = data.replace(/;\s*echo\s+"[^"]*__DEVONZ_CMD_DONE__[^"]*"\s*/g, '');
+    let filtered = data;
 
-    /*
-     * Remove standalone marker output lines.
-     * These are the echoed markers themselves (e.g. `__DEVONZ_CMD_DONE__abc_0`).
-     */
-    filtered = filtered.replace(/[^\n]*__DEVONZ_CMD_DONE__\w+_\d+[^\n]*/g, '');
+    if (hasMarker) {
+      /* Strip the marker echo suffix appended to commands (e.g. `; echo "marker"`) */
+      filtered = filtered.replace(/;\s*echo\s+"[^"]*__DEVONZ_CMD_DONE__[^"]*"\s*/g, '');
+
+      /*
+       * Remove ALL lines containing the marker prefix.
+       * Covers: standalone echo commands (`$ echo "marker"`),
+       * bare marker output (`__DEVONZ_CMD_DONE___READY`),
+       * and command-completion markers (`__DEVONZ_CMD_DONE__abc_0`).
+       */
+      filtered = filtered.replace(/^.*__DEVONZ_CMD_DONE__.*$/gm, '');
+    }
+
+    if (hasBashNoise) {
+      filtered = filtered.replace(/^.*bash: cannot set terminal process group.*$/gm, '');
+      filtered = filtered.replace(/^.*bash: no job control.*$/gm, '');
+    }
 
     /* Collapse excessive blank lines left by removals */
     filtered = filtered.replace(/\n{3,}/g, '\n\n');

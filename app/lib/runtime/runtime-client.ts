@@ -175,6 +175,11 @@ class ClientFileSystem implements RuntimeFileSystem {
 
     const response = await fetch(`/api/runtime/fs?${params}`);
 
+    // 204 = file does not exist (server returns 204 to avoid browser console 404 noise)
+    if (response.status === 204) {
+      throw new Error(`ENOENT: no such file or directory, stat '${path}'`);
+    }
+
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`Failed to stat "${path}": ${error}`);
