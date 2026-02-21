@@ -102,15 +102,15 @@ export default defineConfig({
   ),
   f(
     'src/main.tsx',
-    `import React from 'react';
+    `import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+  <StrictMode>
     <App />
-  </React.StrictMode>,
+  </StrictMode>,
 );
 `,
   ),
@@ -286,7 +286,6 @@ const vanillaVite: InlineFile[] = [
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vanilla + Vite</title>
-    <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <div id="app"></div>
@@ -790,15 +789,15 @@ export function cn(...inputs: ClassValue[]) {
   ),
   f(
     'src/main.tsx',
-    `import React from 'react';
+    `import { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+  <StrictMode>
     <App />
-  </React.StrictMode>,
+  </StrictMode>,
 );
 `,
   ),

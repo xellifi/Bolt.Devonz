@@ -161,8 +161,9 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
       logger.error(error);
 
       if (error instanceof Error && error.message?.includes('API key')) {
-        throw new Response('Invalid or missing API key', {
+        throw new Response(JSON.stringify({ error: 'Invalid or missing API key' }), {
           status: 401,
+          headers: { 'Content-Type': 'application/json' },
           statusText: 'Unauthorized',
         });
       }
@@ -176,16 +177,20 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
           error.message?.includes('maximum'))
       ) {
         throw new Response(
-          `Token limit error: ${error.message}. Try reducing your request size or using a model with higher token limits.`,
+          JSON.stringify({
+            error: `Token limit error: ${error.message}. Try reducing your request size or using a model with higher token limits.`,
+          }),
           {
             status: 400,
+            headers: { 'Content-Type': 'application/json' },
             statusText: 'Token Limit Exceeded',
           },
         );
       }
 
-      throw new Response(null, {
+      throw new Response(JSON.stringify({ error: 'An unexpected error occurred during streaming' }), {
         status: 500,
+        headers: { 'Content-Type': 'application/json' },
         statusText: 'Internal Server Error',
       });
     }
