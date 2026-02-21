@@ -106,7 +106,18 @@ export const ChatImpl = memo(
     const [imageDataList, setImageDataList] = useState<string[]>([]);
     const [searchParams, setSearchParams] = useSearchParams();
     const [fakeLoading, setFakeLoading] = useState(false);
-    const files = useStore(workbenchStore.files);
+    const liveFiles = useStore(workbenchStore.files);
+    const filesRef = useRef(liveFiles);
+    const [debouncedFiles, setDebouncedFiles] = useState(liveFiles);
+
+    useEffect(() => {
+      filesRef.current = liveFiles;
+
+      const timer = setTimeout(() => setDebouncedFiles(liveFiles), 300);
+
+      return () => clearTimeout(timer);
+    }, [liveFiles]);
+
     const [designScheme, setDesignScheme] = useState<DesignScheme>(defaultDesignScheme);
     const actionAlert = useStore(workbenchStore.alert);
     const deployAlert = useStore(workbenchStore.deployAlert);
@@ -196,7 +207,7 @@ export const ChatImpl = memo(
       api: '/api/chat',
       body: {
         apiKeys,
-        files,
+        files: debouncedFiles,
         promptId,
         contextOptimization: contextOptimizationEnabled,
         enableThinking,

@@ -104,7 +104,11 @@ export function CloudProviderCard({ provider, index, onToggle, iconClass, descri
           delete parsed[provider.name];
         }
 
-        Cookies.set('apiKeys', JSON.stringify(parsed), { expires: 30 });
+        Cookies.set('apiKeys', JSON.stringify(parsed), {
+          secure: window.location.protocol === 'https:',
+          sameSite: 'strict',
+          expires: 30,
+        });
         setHasKey(value.trim().length > 0);
       } catch {
         toast.error('Failed to save API key');
@@ -190,14 +194,18 @@ export function CloudProviderCard({ provider, index, onToggle, iconClass, descri
             className={classNames(
               iconClass,
               'w-6 h-6',
-              provider.settings.enabled ? 'text-devonz-elements-item-contentAccent' : 'text-devonz-elements-textSecondary',
+              provider.settings.enabled
+                ? 'text-devonz-elements-item-contentAccent'
+                : 'text-devonz-elements-textSecondary',
             )}
           />
           <div className="flex items-center gap-2">
             <span
               className={classNames(
                 'text-sm font-medium',
-                provider.settings.enabled ? 'text-devonz-elements-item-contentAccent' : 'text-devonz-elements-textPrimary',
+                provider.settings.enabled
+                  ? 'text-devonz-elements-item-contentAccent'
+                  : 'text-devonz-elements-textPrimary',
               )}
             >
               {provider.name}

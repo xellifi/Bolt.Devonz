@@ -6,7 +6,6 @@ import { useStore } from '@nanostores/react';
 import { classNames } from '~/utils/classNames';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Dialog, DialogRoot, DialogTitle } from '~/components/ui/Dialog';
-import { jsPDF } from 'jspdf';
 import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -148,7 +147,10 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
           {details.prompt && (
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-devonz-elements-textPrimary">Prompt:</div>
-              <pre className="text-xs text-devonz-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-devonz-elements-borderColor" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+              <pre
+                className="text-xs text-devonz-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-devonz-elements-borderColor"
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+              >
                 {details.prompt}
               </pre>
             </div>
@@ -156,7 +158,10 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
           {details.response && (
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-devonz-elements-textPrimary">Response:</div>
-              <pre className="text-xs text-devonz-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-devonz-elements-borderColor" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+              <pre
+                className="text-xs text-devonz-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-devonz-elements-borderColor"
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+              >
                 {details.response}
               </pre>
             </div>
@@ -179,7 +184,10 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
           {details.request && (
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-devonz-elements-textPrimary">Request:</div>
-              <pre className="text-xs text-devonz-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-devonz-elements-borderColor" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+              <pre
+                className="text-xs text-devonz-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-devonz-elements-borderColor"
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+              >
                 {JSON.stringify(details.request, null, 2)}
               </pre>
             </div>
@@ -187,7 +195,10 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
           {details.response && (
             <div className="flex flex-col gap-1">
               <div className="text-xs font-medium text-devonz-elements-textPrimary">Response:</div>
-              <pre className="text-xs text-devonz-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-devonz-elements-borderColor" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+              <pre
+                className="text-xs text-devonz-elements-textSecondary rounded p-2 whitespace-pre-wrap border-l-2 border-devonz-elements-borderColor"
+                style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+              >
                 {JSON.stringify(details.response, null, 2)}
               </pre>
             </div>
@@ -208,7 +219,10 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
     const entries = Object.entries(details).filter(([, v]) => v !== undefined && v !== null && v !== '');
 
     return (
-      <div className="rounded-lg p-3 border-l-2 border-devonz-elements-borderColorActive" style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}>
+      <div
+        className="rounded-lg p-3 border-l-2 border-devonz-elements-borderColorActive"
+        style={{ backgroundColor: 'rgba(255,255,255,0.03)' }}
+      >
         <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
           {entries.map(([key, value]) => {
             const isObject = typeof value === 'object';
@@ -255,7 +269,12 @@ const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTimestamp
                   onClick={() => setLocalExpanded(!localExpanded)}
                   className="inline-flex items-center gap-1 text-xs text-devonz-elements-item-contentAccent hover:underline transition-colors w-fit bg-transparent border-none p-0 cursor-pointer"
                 >
-                  <span className={classNames('text-sm transition-transform', localExpanded ? 'i-ph:caret-down' : 'i-ph:caret-right')} />
+                  <span
+                    className={classNames(
+                      'text-sm transition-transform',
+                      localExpanded ? 'i-ph:caret-down' : 'i-ph:caret-right',
+                    )}
+                  />
                   {localExpanded ? 'Hide' : 'Show'} Details
                 </button>
                 {localExpanded && renderDetails(log.details as Record<string, React.ReactNode>)}
@@ -498,8 +517,11 @@ export function EventLogsTab() {
     }
   };
 
-  const exportAsPDF = () => {
+  const exportAsPDF = async () => {
     try {
+      // Lazy-load jsPDF — only needed when user exports to PDF
+      const { jsPDF } = await import('jspdf');
+
       // Create new PDF document
       const doc = new jsPDF();
       const lineHeight = 7;

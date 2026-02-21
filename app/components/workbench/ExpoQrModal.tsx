@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Dialog, DialogTitle, DialogDescription, DialogRoot } from '~/components/ui/Dialog';
 import { useStore } from '@nanostores/react';
 import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
-import { QRCode } from 'react-qrcode-logo';
+
+const QrCode = lazy(() => import('react-qrcode-logo').then((mod) => ({ default: mod.QRCode })));
 
 interface ExpoQrModalProps {
   open: boolean;
@@ -29,21 +30,29 @@ export const ExpoQrModal: React.FC<ExpoQrModalProps> = ({ open, onClose }) => {
           </DialogDescription>
           <div className="my-6 flex flex-col items-center">
             {expoUrl ? (
-              <QRCode
-                logoImage="/favicon.svg"
-                removeQrCodeBehindLogo={true}
-                logoPadding={3}
-                logoHeight={50}
-                logoWidth={50}
-                logoPaddingStyle="square"
-                style={{
-                  borderRadius: 16,
-                  padding: 2,
-                  backgroundColor: '#1e3a8a',
-                }}
-                value={expoUrl}
-                size={200}
-              />
+              <Suspense
+                fallback={
+                  <div className="w-[250px] h-[250px] flex items-center justify-center text-devonz-elements-textSecondary">
+                    Loading QR code...
+                  </div>
+                }
+              >
+                <QrCode
+                  logoImage="/favicon.svg"
+                  removeQrCodeBehindLogo={true}
+                  logoPadding={3}
+                  logoHeight={50}
+                  logoWidth={50}
+                  logoPaddingStyle="square"
+                  style={{
+                    borderRadius: 16,
+                    padding: 2,
+                    backgroundColor: '#1e3a8a',
+                  }}
+                  value={expoUrl}
+                  size={200}
+                />
+              </Suspense>
             ) : (
               <div className="text-gray-500 text-center">No Expo URL detected.</div>
             )}
