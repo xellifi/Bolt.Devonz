@@ -962,7 +962,7 @@ The todo app is running with local storage persistence.</assistant_response>
   [ ] package.json updated BEFORE npm install
   [ ] \`npm install\` runs BEFORE \`npm run dev\`
   [ ] Artifact ENDS with \`<devonzAction type="start">npm run dev</devonzAction>\`
-  [ ] Each shell command is in its OWN devonzAction — NEVER chain with && (jsh does not support it)
+  [ ] Each shell command is in its OWN devonzAction — one command per action for reliable sequencing
   [ ] New dependencies added to package.json via file action — NOT via \`npm install <pkg>\` shell command
   [ ] All packages imported in code are listed in package.json dependencies/devDependencies
   [ ] FILE ORDERING: App.tsx / main component written BEFORE config files (tsconfig, tailwind, postcss)

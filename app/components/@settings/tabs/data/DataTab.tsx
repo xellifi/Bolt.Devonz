@@ -655,6 +655,49 @@ export function DataTab() {
                 </motion.div>
               </CardFooter>
             </Card>
+
+            {/* Download Full Backup */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center mb-2">
+                  <motion.div className="text-accent-500 mr-2" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <div className="i-ph-download-simple-duotone w-5 h-5" />
+                  </motion.div>
+                  <CardTitle className="text-lg group-hover:text-devonz-elements-item-contentAccent transition-colors">
+                    Download Full Backup
+                  </CardTitle>
+                </div>
+                <CardDescription>Download all chats, snapshots, and versions as a JSON file.</CardDescription>
+              </CardHeader>
+              <CardFooter>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="w-full">
+                  <Button
+                    onClick={async () => {
+                      try {
+                        const { downloadBackup } = await import('~/lib/persistence/autoBackup');
+                        const database = await openDatabase();
+
+                        if (!database) {
+                          toast.error('Database not available');
+                          return;
+                        }
+
+                        await downloadBackup(database);
+                        toast.success('Backup downloaded');
+                      } catch (err) {
+                        logger.error('Backup download failed:', err);
+                        toast.error('Failed to download backup');
+                      }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="hover:text-devonz-elements-item-contentAccent hover:border-devonz-elements-item-backgroundAccent hover:bg-devonz-elements-item-backgroundAccent transition-colors w-full justify-center"
+                  >
+                    Download Backup
+                  </Button>
+                </motion.div>
+              </CardFooter>
+            </Card>
           </div>
         </div>
       )}

@@ -165,16 +165,15 @@ export const discussPrompt = () => `
 </devonz_quick_actions>
 
 <system_constraints>
-  You operate in WebContainer, an in-browser Node.js runtime that emulates a Linux system. Key points:
-    - Runs in the browser, not a full Linux system or cloud VM
-    - Has a shell emulating zsh
-    - Cannot run native binaries (only browser-native code like JS, WebAssembly)
-    - Python is limited to standard library only (no pip, no third-party libraries)
-    - No C/C++ compiler available
-    - No Rust compiler available
-    - Git is not available
+  You operate in a local Node.js runtime on the user's machine:
+    - Full Linux/macOS/Windows environment with native binary support
+    - Standard shell (bash/zsh/cmd) with full command syntax
+    - Node.js, npm, and npx available natively
+    - Native binaries, SWC, Turbopack all work
+    - Python available if installed on the host
+    - Git available if installed on the host
     - Cannot use Supabase CLI
-    - Available shell commands: cat, chmod, cp, echo, hostname, kill, ln, ls, mkdir, mv, ps, pwd, rm, rmdir, xxd, alias, cd, clear, curl, env, false, getconf, head, sort, tail, touch, true, uptime, which, code, jq, loadenv, node, python, python3, wasm, xdg-open, command, exit, export, source
+    - NO external API calls — fetch() to third-party APIs with API keys will FAIL (401/403/CORS)
 </system_constraints>
 
 <technology_preferences>
@@ -212,7 +211,7 @@ When responding to user prompts, consider the following information:
 
 1.  **Project Files:** Analyze the file contents to understand the project structure, dependencies, and existing code. Pay close attention to the file changes provided.
 2.  **Running Shell Commands:** Be aware of any running processes, such as the development server.
-3.  **System Constraints:** Ensure that your suggestions are compatible with the limitations of the WebContainer environment.
+3.  **System Constraints:** Ensure that your suggestions are compatible with the local Node.js runtime environment.
 4.  **Technology Preferences:** Follow the preferred technologies and libraries.
 5.  **User Instructions:** Adhere to any specific instructions or requests from the user.
 
