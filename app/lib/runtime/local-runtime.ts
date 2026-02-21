@@ -80,6 +80,48 @@ function killProcessTree(proc: ChildProcess): void {
   }
 }
 
+/**
+ * Kill any process listening on a given TCP port (Windows only).
+ * Uses `netstat` to find the PID and `taskkill` to force-kill it.
+ * This catches orphaned dev-server processes that `taskkill /T` missed
+ * (e.g. when `next dev` spawns detached child processes).
+ */
+function killPortHolder(port: number): void {
+  if (os.platform() !== 'win32') {
+    return;
+  }
+
+  try {
+    const output = execSync(`netstat -ano | findstr :${port} | findstr LISTENING`, {
+      encoding: 'utf-8',
+      windowsHide: true,
+      timeout: 3_000,
+    });
+
+    const pids = new Set<number>();
+
+    for (const line of output.split('\n')) {
+      const parts = line.trim().split(/\s+/);
+      const pid = parseInt(parts[parts.length - 1], 10);
+
+      if (pid > 0 && !isNaN(pid)) {
+        pids.add(pid);
+      }
+    }
+
+    for (const pid of pids) {
+      try {
+        execSync(`taskkill /pid ${pid} /T /F`, { stdio: 'ignore', windowsHide: true });
+        logger.debug(`Killed port ${port} holder (PID ${pid})`);
+      } catch {
+        // Process may have already exited
+      }
+    }
+  } catch {
+    // No process found on the port — nothing to kill
+  }
+}
+
 /** Regex patterns to detect port announcements in process output. */
 const PORT_PATTERNS = [
   /(?:Local|Server|App|http):?\s*(?:running\s+(?:at|on)\s+)?https?:\/\/[^:/\s]+:(\d+)/i,
@@ -398,6 +440,15 @@ export class LocalRuntime implements RuntimeProvider {
 
     // Wait for all processes to exit so ports are released
     await Promise.all(exitPromises);
+
+    /*
+     * On Windows, `taskkill /T /F` may not kill detached child processes
+     * (e.g. `next dev` spawning separate Node workers). As a fallback,
+     * find and kill any process still holding a previously-detected port.
+     */
+    for (const port of this.#detectedPorts) {
+      killPortHolder(port);
+    }
 
     this.#sessions.clear();
     this.#detectedPorts.clear();
