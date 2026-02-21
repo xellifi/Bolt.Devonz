@@ -66,6 +66,9 @@ const UNIVERSAL_EXTRA_PACKAGES: Record<string, string> = {
   'date-fns': '^4.1.0',
   axios: '^1.7.9',
   zod: '^3.24.1',
+  nanoid: '^5.1.5',
+  clsx: '^2.1.1',
+  'tailwind-merge': '^2.5.4',
 };
 
 /**
@@ -81,6 +84,9 @@ const REACT_EXTRA_PACKAGES: Record<string, string> = {
   '@tanstack/react-query': '^5.62.16',
   'react-hook-form': '^7.54.2',
   '@hookform/resolvers': '^3.9.1',
+  sonner: '^1.7.0',
+  'class-variance-authority': '^0.7.0',
+  recharts: '^2.15.0',
 };
 
 /**
@@ -98,6 +104,8 @@ const COMMON_EXTRA_PACKAGES: Record<string, string> = {
 const VUE_EXTRA_PACKAGES: Record<string, string> = {
   pinia: '^3.0.1',
   '@vueuse/core': '^12.5.0',
+  'vue-router': '^4.5.0',
+  'lucide-vue-next': '^0.460.0',
 };
 
 /**
@@ -831,10 +839,14 @@ ${resolvedName.toLowerCase().includes('shadcn') ? `- Shadcn/ui template: All Rad
   const filePaths = filteredFiles.map((f) => f.path);
   const mainEntryFile = entryPointPriority.find((ep) => filePaths.includes(ep));
 
+  // Detect cn() utility location so the LLM uses it instead of creating its own
+  const cnUtilityPaths = ['src/lib/utils.ts', 'lib/utils.ts', 'src/utils.ts', 'utils/cn.ts'];
+  const cnUtilityFile = cnUtilityPaths.find((p) => filePaths.includes(p));
+
   userMessage += `
 Template "${displayName}" imported and running. All files are already created and installed — DO NOT recreate them.
 ${archSummary ? `Architecture: ${archSummary}\n` : ''}${dirHint ? `Directories: ${dirHint}\n` : ''}Pre-installed packages (ready to import): ${availablePackageHint}.
-${mainEntryFile ? `Primary file to modify: ${mainEntryFile}\n` : ''}`;
+${mainEntryFile ? `Primary file to modify: ${mainEntryFile}\n` : ''}${cnUtilityFile ? `Class utility: import { cn } from '${cnUtilityFile.startsWith('src/') ? `@/${cnUtilityFile.slice(4, -3)}` : `./${cnUtilityFile.slice(0, -3)}`}' — use cn() for conditional class merging.\n` : ''}`;
 
   /*
    * Add framework-specific coding hints for non-React frameworks
