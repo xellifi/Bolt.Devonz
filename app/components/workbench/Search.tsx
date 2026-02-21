@@ -127,11 +127,16 @@ export const Search = memo(() => {
     }
   }, []);
 
-  const debouncedSearch = useCallback(debounce(handleSearch, 300), [handleSearch]);
+  const debouncedSearch = useMemo(() => debounce(handleSearch, 300), [handleSearch]);
 
   useEffect(() => {
     debouncedSearch(searchQuery);
   }, [searchQuery, debouncedSearch]);
+
+  // Cancel pending debounced search on unmount
+  useEffect(() => {
+    return () => debouncedSearch.cancel();
+  }, [debouncedSearch]);
 
   const handleResultClick = (filePath: string, line?: number) => {
     workbenchStore.setSelectedFile(filePath);

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { debounce } from '~/utils/debounce';
 import type { ChatHistoryItem } from '~/lib/persistence';
 
@@ -15,7 +15,12 @@ export function useSearchFilter({
 }: UseSearchFilterOptions) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const debouncedSetSearch = useCallback(debounce(setSearchQuery, debounceMs), []);
+  const debouncedSetSearch = useMemo(() => debounce(setSearchQuery, debounceMs), [debounceMs]);
+
+  // Cancel pending debounce on unmount
+  useEffect(() => {
+    return () => debouncedSetSearch.cancel();
+  }, [debouncedSetSearch]);
 
   const handleSearchChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {

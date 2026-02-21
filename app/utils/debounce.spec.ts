@@ -121,4 +121,39 @@ describe('debounce', () => {
     expect(fn1).toHaveBeenCalledTimes(1);
     expect(fn2).toHaveBeenCalledTimes(1);
   });
+
+  it('should cancel pending execution', () => {
+    const fn = vi.fn();
+    const debounced = debounce(fn, 100);
+
+    debounced('value');
+    debounced.cancel();
+
+    vi.advanceTimersByTime(200);
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it('should allow new calls after cancel', () => {
+    const fn = vi.fn();
+    const debounced = debounce(fn, 100);
+
+    debounced('first');
+    debounced.cancel();
+
+    debounced('second');
+    vi.advanceTimersByTime(100);
+    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledWith('second');
+  });
+
+  it('should be safe to call cancel when nothing is pending', () => {
+    const fn = vi.fn();
+    const debounced = debounce(fn, 100);
+
+    // Should not throw
+    debounced.cancel();
+    debounced.cancel();
+
+    expect(fn).not.toHaveBeenCalled();
+  });
 });

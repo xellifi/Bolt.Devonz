@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useStore } from '@nanostores/react';
 import { classNames } from '~/utils/classNames';
 import { profileStore, updateProfile } from '~/lib/stores/profile';
@@ -13,13 +13,19 @@ export default function ProfileTab() {
   const [isUploading, setIsUploading] = useState(false);
 
   // Create debounced update functions
-  const debouncedUpdate = useCallback(
-    debounce((field: 'username' | 'bio', value: string) => {
-      updateProfile({ [field]: value });
-      toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`);
-    }, 1000),
+  const debouncedUpdate = useMemo(
+    () =>
+      debounce((field: 'username' | 'bio', value: string) => {
+        updateProfile({ [field]: value });
+        toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`);
+      }, 1000),
     [],
   );
+
+  // Cancel pending debounce on unmount
+  useEffect(() => {
+    return () => debouncedUpdate.cancel();
+  }, [debouncedUpdate]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
