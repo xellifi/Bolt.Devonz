@@ -905,6 +905,20 @@ export const Versions = memo(() => {
                   const diff = filesModal.diffs.get(file);
                   const isExpanded = expandedFiles.has(file);
 
+                  // Count additions and deletions from diff
+                  let additions = 0;
+                  let deletions = 0;
+
+                  if (diff) {
+                    for (const line of diff.split('\n')) {
+                      if (line.startsWith('+') && !line.startsWith('+++')) {
+                        additions++;
+                      } else if (line.startsWith('-') && !line.startsWith('---')) {
+                        deletions++;
+                      }
+                    }
+                  }
+
                   return (
                     <div key={file} style={{ borderBottom: '1px solid var(--devonz-elements-borderColor)' }}>
                       <button
@@ -938,7 +952,13 @@ export const Versions = memo(() => {
                           {status}
                         </span>
                         <div className="i-ph:file-text text-xs text-devonz-elements-textSecondary" />
-                        <span className="font-mono text-sm text-devonz-elements-textPrimary">{file}</span>
+                        <span className="font-mono text-sm text-devonz-elements-textPrimary flex-1">{file}</span>
+                        {(additions > 0 || deletions > 0) && (
+                          <span className="flex items-center gap-1.5 font-mono text-xs ml-auto">
+                            {additions > 0 && <span style={{ color: '#4ade80' }}>+{additions}</span>}
+                            {deletions > 0 && <span style={{ color: '#f87171' }}>-{deletions}</span>}
+                          </span>
+                        )}
                       </button>
                       {isExpanded && diff && (
                         <pre
