@@ -64,7 +64,9 @@ export function ErrorState({
   return (
     <div className={classNames('flex flex-col items-center justify-center py-8 text-center', className)}>
       <div className={classNames('i-ph:warning-circle text-red-500 mb-2', sizeClasses[size])} />
-      <h3 className={classNames('font-medium text-devonz-elements-textPrimary mb-1', textSizeClasses[size])}>{title}</h3>
+      <h3 className={classNames('font-medium text-devonz-elements-textPrimary mb-1', textSizeClasses[size])}>
+        {title}
+      </h3>
       <p className={classNames('text-devonz-elements-textSecondary mb-4', textSizeClasses[size])}>{message}</p>
       {onRetry && (
         <button
@@ -110,7 +112,9 @@ export function SuccessState({
   return (
     <div className={classNames('flex flex-col items-center justify-center py-8 text-center', className)}>
       <div className={classNames('i-ph:check-circle text-green-500 mb-2', sizeClasses[size])} />
-      <h3 className={classNames('font-medium text-devonz-elements-textPrimary mb-1', textSizeClasses[size])}>{title}</h3>
+      <h3 className={classNames('font-medium text-devonz-elements-textPrimary mb-1', textSizeClasses[size])}>
+        {title}
+      </h3>
       <p className={classNames('text-devonz-elements-textSecondary mb-4', textSizeClasses[size])}>{message}</p>
       {onAction && (
         <button
@@ -185,7 +189,9 @@ export function InformationState({
   return (
     <div className={classNames('flex flex-col items-center justify-center py-8 text-center', className)}>
       <div className={classNames(iconClass, 'text-blue-500 mb-2', sizeClasses[size])} />
-      <h3 className={classNames('font-medium text-devonz-elements-textPrimary mb-1', textSizeClasses[size])}>{title}</h3>
+      <h3 className={classNames('font-medium text-devonz-elements-textPrimary mb-1', textSizeClasses[size])}>
+        {title}
+      </h3>
       <p className={classNames('text-devonz-elements-textSecondary mb-4', textSizeClasses[size])}>{message}</p>
       {onAction && (
         <button

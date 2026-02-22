@@ -9,7 +9,7 @@ interface LockedItem {
   type: 'file' | 'folder';
 }
 
-export const LockManager = memo(function LockManager() {
+export const LockManager = memo(() => {
   const [lockedItems, setLockedItems] = useState<LockedItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<'all' | 'files' | 'folders'>('all');

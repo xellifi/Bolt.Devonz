@@ -216,7 +216,9 @@ export function BranchSelector({
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 min-w-0">
                               <div className="i-ph:git-branch size-4 flex-shrink-0 text-devonz-elements-textSecondary" />
-                              <span className="font-medium text-devonz-elements-textPrimary truncate">{branch.name}</span>
+                              <span className="font-medium text-devonz-elements-textPrimary truncate">
+                                {branch.name}
+                              </span>
                               <div className="flex items-center gap-1 flex-shrink-0">
                                 {branch.isDefault && <div className="i-ph:star size-3 text-yellow-500" />}
                                 {branch.protected && <div className="i-ph:shield size-3 text-red-500" />}

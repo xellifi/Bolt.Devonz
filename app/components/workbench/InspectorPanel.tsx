@@ -352,7 +352,10 @@ export const InspectorPanel = memo(
           {activeTab === 'text' && (
             <div className="space-y-3">
               <div>
-                <label htmlFor="inspector-text-content" className="text-xs text-devonz-elements-textSecondary block mb-1">
+                <label
+                  htmlFor="inspector-text-content"
+                  className="text-xs text-devonz-elements-textSecondary block mb-1"
+                >
                   Text Content
                 </label>
                 <textarea
@@ -467,7 +470,9 @@ export const InspectorPanel = memo(
               </button>
             </div>
           ) : (
-            <p className="text-devonz-elements-textTertiary text-xs text-center">Edit values above to see live changes</p>
+            <p className="text-devonz-elements-textTertiary text-xs text-center">
+              Edit values above to see live changes
+            </p>
           )}
 
           {/* Delete Element Button */}

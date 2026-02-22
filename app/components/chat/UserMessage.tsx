@@ -111,7 +111,10 @@ export function UserMessage({ content, parts }: UserMessageProps) {
         {images.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {images.map((item, index) => (
-              <div key={index} className="relative rounded-lg border border-devonz-elements-borderColor overflow-hidden">
+              <div
+                key={index}
+                className="relative rounded-lg border border-devonz-elements-borderColor overflow-hidden"
+              >
                 <img
                   src={`data:${item.mimeType};base64,${item.data}`}
                   alt={`Image ${index + 1}`}

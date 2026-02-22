@@ -258,7 +258,9 @@ async function handleGitClone({ request }: ActionFunctionArgs) {
     return json({ tempId, files });
   } catch (error) {
     /* Clean up on failure. */
-    await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {
+      /* intentionally swallow cleanup errors */
+    });
 
     const message = error instanceof Error ? error.message : 'Clone failed';
     logger.error('Git clone error:', message);

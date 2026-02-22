@@ -404,7 +404,9 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                     <li>Set Network Interface to "0.0.0.0" for external access</li>
                     <li>
                       Alternatively, use CLI:{' '}
-                      <code className="bg-devonz-elements-background-depth-4 px-1 rounded">lms server start --cors</code>
+                      <code className="bg-devonz-elements-background-depth-4 px-1 rounded">
+                        lms server start --cors
+                      </code>
                     </li>
                   </ol>
                 </div>
@@ -611,7 +613,9 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                     <div className="i-ph:plugs-connected w-4 h-4 text-devonz-elements-item-contentAccent" />
                     <span className="font-medium text-devonz-elements-textPrimary">KoboldAI</span>
                   </div>
-                  <p className="text-xs text-devonz-elements-textSecondary">Focus on creative writing and storytelling</p>
+                  <p className="text-xs text-devonz-elements-textSecondary">
+                    Focus on creative writing and storytelling
+                  </p>
                 </div>
               </div>
             </div>
@@ -623,7 +627,9 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                     <div className="i-ph:globe w-4 h-4 text-orange-500" />
                     <span className="font-medium text-devonz-elements-textPrimary">OpenRouter</span>
                   </div>
-                  <p className="text-xs text-devonz-elements-textSecondary">Access to 100+ models through unified API</p>
+                  <p className="text-xs text-devonz-elements-textSecondary">
+                    Access to 100+ models through unified API
+                  </p>
                 </div>
                 <div className="p-3 rounded-lg bg-devonz-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-1">
@@ -637,7 +643,9 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
                     <div className="i-ph:activity w-4 h-4 text-pink-500" />
                     <span className="font-medium text-devonz-elements-textPrimary">Groq</span>
                   </div>
-                  <p className="text-xs text-devonz-elements-textSecondary">Ultra-fast LPU inference for Llama models</p>
+                  <p className="text-xs text-devonz-elements-textSecondary">
+                    Ultra-fast LPU inference for Llama models
+                  </p>
                 </div>
               </div>
             </div>

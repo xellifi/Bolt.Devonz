@@ -53,7 +53,9 @@ export const BoxModelEditor = memo(({ boxModel, onValueChange }: BoxModelEditorP
   );
 
   if (!boxModel) {
-    return <div className="text-devonz-elements-textSecondary text-xs text-center py-4">No box model data available</div>;
+    return (
+      <div className="text-devonz-elements-textSecondary text-xs text-center py-4">No box model data available</div>
+    );
   }
 
   const renderEditableValue = (field: string, value: number, textColor: string) => {

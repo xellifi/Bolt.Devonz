@@ -61,7 +61,9 @@ function createMockProcess(
     write: vi.fn(),
     kill: vi.fn(),
     resize: vi.fn(),
-    onExit: new Promise<number>(() => {}),
+    onExit: new Promise<number>(() => {
+      /* never resolves in mock */
+    }),
     onData: vi.fn((cb: DataCallback): Disposer => {
       dataCallbacks.push(cb);
 

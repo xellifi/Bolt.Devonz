@@ -21,7 +21,9 @@ export function GitHubUserProfile({ user, className = '' }: GitHubUserProfilePro
         <h4 className="text-sm font-medium text-devonz-elements-textPrimary dark:text-devonz-elements-textPrimary">
           {user.name || user.login}
         </h4>
-        <p className="text-sm text-devonz-elements-textSecondary dark:text-devonz-elements-textSecondary">@{user.login}</p>
+        <p className="text-sm text-devonz-elements-textSecondary dark:text-devonz-elements-textSecondary">
+          @{user.login}
+        </p>
         {user.bio && (
           <p className="text-xs text-devonz-elements-textTertiary dark:text-devonz-elements-textTertiary mt-1">
             {user.bio}

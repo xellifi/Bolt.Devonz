@@ -103,6 +103,7 @@ describe('PlanStore', () => {
     // Store state unchanged
     expect(planStore.get().isActive).toBe(true);
     expect(planStore.get().tasks).toHaveLength(2);
+
     // Action fired
     expect(planActionAtom.get()).toBe('modify');
   });

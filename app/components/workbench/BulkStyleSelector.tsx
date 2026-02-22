@@ -79,117 +79,114 @@ const VALUE_TO_SELECTOR: Record<string, string> = {
   li: 'li',
 };
 
-export const BulkStyleSelector = memo(({
-  currentTagName,
-  selectedTarget,
-  onSelectTarget,
-  affectedCount,
-}: BulkStyleSelectorProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const BulkStyleSelector = memo(
+  ({ currentTagName, selectedTarget, onSelectTarget, affectedCount }: BulkStyleSelectorProps) => {
+    const [isOpen, setIsOpen] = useState(false);
 
-  const handleSelect = useCallback(
-    (value: string, label: string) => {
-      if (value === 'current') {
-        onSelectTarget(null);
-      } else if (value === 'same-tag') {
-        onSelectTarget({
-          value: 'same-tag',
-          label: `All <${currentTagName}>`,
-          selector: currentTagName.toLowerCase(),
-        });
-      } else {
-        onSelectTarget({
-          value,
-          label,
-          selector: VALUE_TO_SELECTOR[value] || value,
-        });
-      }
+    const handleSelect = useCallback(
+      (value: string, label: string) => {
+        if (value === 'current') {
+          onSelectTarget(null);
+        } else if (value === 'same-tag') {
+          onSelectTarget({
+            value: 'same-tag',
+            label: `All <${currentTagName}>`,
+            selector: currentTagName.toLowerCase(),
+          });
+        } else {
+          onSelectTarget({
+            value,
+            label,
+            selector: VALUE_TO_SELECTOR[value] || value,
+          });
+        }
 
-      setIsOpen(false);
-    },
-    [currentTagName, onSelectTarget],
-  );
+        setIsOpen(false);
+      },
+      [currentTagName, onSelectTarget],
+    );
 
-  const displayLabel = selectedTarget ? selectedTarget.label : 'Current Element Only';
-  const isBulkMode = selectedTarget !== null;
+    const displayLabel = selectedTarget ? selectedTarget.label : 'Current Element Only';
+    const isBulkMode = selectedTarget !== null;
 
-  return (
-    <div className="relative">
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium rounded border transition-colors ${
-          isBulkMode
-            ? 'bg-purple-500/20 border-purple-500/50 text-purple-300 hover:bg-purple-500/30'
-            : 'bg-devonz-elements-background-depth-3 border-devonz-elements-borderColor text-devonz-elements-textSecondary hover:bg-devonz-elements-background-depth-4'
-        }`}
-      >
-        <div className="flex items-center gap-1.5">
-          <span className={isBulkMode ? 'i-ph:stack-bold' : 'i-ph:cursor-click'} />
-          <span className="truncate">{displayLabel}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          {isBulkMode && affectedCount !== undefined && (
-            <span className="text-[10px] bg-purple-500/30 px-1.5 py-0.5 rounded-full">{affectedCount} elements</span>
-          )}
-          <span className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}>
-            <span className="i-ph:caret-down w-3 h-3" />
-          </span>
-        </div>
-      </button>
+    return (
+      <div className="relative">
+        {/* Toggle Button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium rounded border transition-colors ${
+            isBulkMode
+              ? 'bg-purple-500/20 border-purple-500/50 text-purple-300 hover:bg-purple-500/30'
+              : 'bg-devonz-elements-background-depth-3 border-devonz-elements-borderColor text-devonz-elements-textSecondary hover:bg-devonz-elements-background-depth-4'
+          }`}
+        >
+          <div className="flex items-center gap-1.5">
+            <span className={isBulkMode ? 'i-ph:stack-bold' : 'i-ph:cursor-click'} />
+            <span className="truncate">{displayLabel}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            {isBulkMode && affectedCount !== undefined && (
+              <span className="text-[10px] bg-purple-500/30 px-1.5 py-0.5 rounded-full">{affectedCount} elements</span>
+            )}
+            <span className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+              <span className="i-ph:caret-down w-3 h-3" />
+            </span>
+          </div>
+        </button>
 
-      {/* Dropdown */}
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-devonz-elements-background-depth-2 border border-devonz-elements-borderColor rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
-          {ELEMENT_CATEGORIES.map((category) => (
-            <div key={category.category}>
-              <div className="px-2 py-1 text-[10px] font-semibold text-devonz-elements-textTertiary uppercase bg-devonz-elements-background-depth-3 sticky top-0">
-                {category.category}
+        {/* Dropdown */}
+        {isOpen && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-devonz-elements-background-depth-2 border border-devonz-elements-borderColor rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+            {ELEMENT_CATEGORIES.map((category) => (
+              <div key={category.category}>
+                <div className="px-2 py-1 text-[10px] font-semibold text-devonz-elements-textTertiary uppercase bg-devonz-elements-background-depth-3 sticky top-0">
+                  {category.category}
+                </div>
+                {category.targets.map((target) => (
+                  <button
+                    key={target.value}
+                    onClick={() => handleSelect(target.value, target.label)}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-devonz-elements-background-depth-3 transition-colors ${
+                      selectedTarget?.value === target.value || (target.value === 'current' && !selectedTarget)
+                        ? 'bg-accent-500/20 text-accent-400'
+                        : 'text-devonz-elements-textPrimary'
+                    }`}
+                  >
+                    {target.label}
+                  </button>
+                ))}
               </div>
-              {category.targets.map((target) => (
+            ))}
+
+            {/* Dynamic "Same Tag" Option */}
+            {currentTagName && !['html', 'body', 'head'].includes(currentTagName.toLowerCase()) && (
+              <div>
+                <div className="px-2 py-1 text-[10px] font-semibold text-devonz-elements-textTertiary uppercase bg-devonz-elements-background-depth-3 sticky top-0">
+                  Same Type
+                </div>
                 <button
-                  key={target.value}
-                  onClick={() => handleSelect(target.value, target.label)}
+                  onClick={() => handleSelect('same-tag', `All <${currentTagName}>`)}
                   className={`w-full text-left px-3 py-1.5 text-xs hover:bg-devonz-elements-background-depth-3 transition-colors ${
-                    selectedTarget?.value === target.value || (target.value === 'current' && !selectedTarget)
+                    selectedTarget?.value === 'same-tag'
                       ? 'bg-accent-500/20 text-accent-400'
                       : 'text-devonz-elements-textPrimary'
                   }`}
                 >
-                  {target.label}
+                  All &lt;{currentTagName.toLowerCase()}&gt; elements
                 </button>
-              ))}
-            </div>
-          ))}
-
-          {/* Dynamic "Same Tag" Option */}
-          {currentTagName && !['html', 'body', 'head'].includes(currentTagName.toLowerCase()) && (
-            <div>
-              <div className="px-2 py-1 text-[10px] font-semibold text-devonz-elements-textTertiary uppercase bg-devonz-elements-background-depth-3 sticky top-0">
-                Same Type
               </div>
-              <button
-                onClick={() => handleSelect('same-tag', `All <${currentTagName}>`)}
-                className={`w-full text-left px-3 py-1.5 text-xs hover:bg-devonz-elements-background-depth-3 transition-colors ${
-                  selectedTarget?.value === 'same-tag'
-                    ? 'bg-accent-500/20 text-accent-400'
-                    : 'text-devonz-elements-textPrimary'
-                }`}
-              >
-                All &lt;{currentTagName.toLowerCase()}&gt; elements
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
 
-      {/* Bulk Mode Indicator */}
-      {isBulkMode && (
-        <div className="mt-1 text-[10px] text-purple-400 flex items-center gap-1">
-          <span className="i-ph:warning-circle w-3 h-3" />
-          Changes will apply to all matching elements
-        </div>
-      )}
-    </div>
-  );
-});
+        {/* Bulk Mode Indicator */}
+        {isBulkMode && (
+          <div className="mt-1 text-[10px] text-purple-400 flex items-center gap-1">
+            <span className="i-ph:warning-circle w-3 h-3" />
+            Changes will apply to all matching elements
+          </div>
+        )}
+      </div>
+    );
+  },
+);
