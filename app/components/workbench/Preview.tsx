@@ -247,7 +247,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
      */
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const MAX_RETRIES = 60;
+    const MAX_RETRIES = 20;
     const INTERVAL_MS = 500;
 
     const probe = async (attempt: number) => {
