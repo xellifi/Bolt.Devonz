@@ -18,6 +18,7 @@ import {
   type ErrorSource,
 } from '~/lib/stores/autofix';
 import { workbenchStore } from '~/lib/stores/workbench';
+import { getRecoverySuggestion } from '~/utils/errors/errorConfig';
 
 const logger = createScopedLogger('AutoFixService');
 
@@ -54,11 +55,13 @@ export interface AutoFixMessage {
 /**
  * Classify an error to determine the best fix strategy.
  * Returns structured data including the error category and specific fix instructions.
+ *
+ * Patterns are ordered from most specific to most generic — first match wins.
  */
 function classifyError(error: AutoFixError): ClassifiedError {
   const content = error.content;
 
-  // Pattern: Failed to resolve import "package" from "file"
+  // ─── Pattern: Failed to resolve import "package" from "file" ───
   const importResolutionMatch = content.match(/Failed to resolve import ["']([^"']+)["'] from ["']([^"']+)["']/);
 
   if (importResolutionMatch) {
@@ -108,7 +111,33 @@ function classifyError(error: AutoFixError): ClassifiedError {
     };
   }
 
-  // Pattern: Cannot find module 'package'
+  // ─── Pattern: "does not provide an export named 'X'" ───
+  const exportNamedMatch = content.match(/does not provide an export named ['"](\w+)['"]/i);
+
+  if (exportNamedMatch) {
+    const [, exportName] = exportNamedMatch;
+    const sourceFileMatch = content.match(/from ["']([^"']+)["']/);
+    const sourceFile = sourceFileMatch?.[1];
+
+    return {
+      category: 'import-resolution',
+      sourceFile,
+      fixInstructions: [
+        `**Root Cause**: The module${sourceFile ? ` \`${sourceFile}\`` : ''} does not export \`${exportName}\`.`,
+        '',
+        '**Required Fix**:',
+        `1. Open the source module and check its exports — \`${exportName}\` may be a default export but imported as a named import, or vice versa`,
+        `2. If the export name changed, update the import to use the correct name`,
+        `3. If the export doesn't exist at all, either add it to the source module or remove the import`,
+        '',
+        '**Common Mistakes**:',
+        '- `import { Component } from "./file"` when the file uses `export default Component` → use `import Component from "./file"`',
+        '- Typo in the export name — check capitalization',
+      ].join('\n'),
+    };
+  }
+
+  // ─── Pattern: Cannot find module 'package' ───
   const moduleNotFoundMatch = content.match(/Cannot find module ['"]([^'"]+)['"]/);
 
   if (moduleNotFoundMatch) {
@@ -136,7 +165,7 @@ function classifyError(error: AutoFixError): ClassifiedError {
     }
   }
 
-  // Pattern: Element type is invalid (wrong import/export)
+  // ─── Pattern: Element type is invalid (wrong import/export) ───
   const elementTypeMatch = content.match(/Element type is invalid.*?expected a string.*?but got:?\s*(\w+)/i);
 
   if (elementTypeMatch) {
@@ -153,7 +182,23 @@ function classifyError(error: AutoFixError): ClassifiedError {
     };
   }
 
-  // Pattern: Maximum update depth exceeded (infinite re-render)
+  // ─── Pattern: "Objects are not valid as a React child" ───
+  if (content.includes('Objects are not valid as a React child')) {
+    return {
+      category: 'runtime',
+      fixInstructions: [
+        '**Root Cause**: An object or array is being rendered directly in JSX where a string, number, or React element is expected.',
+        '',
+        '**Required Fix**:',
+        '1. If rendering an object, use `JSON.stringify(obj)` or access a specific property like `obj.name`',
+        '2. If rendering an array of objects, `.map()` over it and return JSX for each item',
+        '3. If rendering a Date, convert it: `date.toLocaleDateString()` or `date.toISOString()`',
+        '4. Check your JSX for `{someVariable}` where `someVariable` is an object — it should be a primitive or JSX element',
+      ].join('\n'),
+    };
+  }
+
+  // ─── Pattern: Maximum update depth exceeded (infinite re-render) ───
   if (content.includes('Maximum update depth exceeded')) {
     return {
       category: 'runtime',
@@ -163,21 +208,29 @@ function classifyError(error: AutoFixError): ClassifiedError {
         '**Required Fix**:',
         '1. Check for `setState()` calls inside `useEffect` without proper dependencies',
         '2. Check for event handlers that directly call state setters: `onClick={setX(val)}` should be `onClick={() => setX(val)}`',
-        '3. Ensure `useEffect` dependency arrays do not include objects/arrays created on each render',
+        '3. Ensure `useEffect` dependency arrays do not include objects/arrays created on each render — extract them to state or useMemo',
+        '4. If using `useEffect(() => { setX(...) }, [x])` — this creates a loop. Remove `x` from deps or restructure the logic',
       ].join('\n'),
     };
   }
 
-  // Pattern: SyntaxError or parse errors
-  if (content.includes('SyntaxError') || content.includes('Unexpected token') || content.includes('Parse error')) {
+  // ─── Pattern: Invalid hook call ───
+  if (content.includes('Invalid hook call')) {
     return {
-      category: 'syntax',
-      fixInstructions:
-        'Fix the syntax error in the indicated file. Check for missing brackets, semicolons, or invalid JSX.',
+      category: 'runtime',
+      fixInstructions: [
+        '**Root Cause**: React hooks are being called incorrectly.',
+        '',
+        '**Required Fix** (check ALL of these):',
+        '1. Hooks must be called at the TOP LEVEL of a function component — not inside loops, conditions, or nested functions',
+        '2. Hooks must only be called from React function components or custom hooks — not from regular JS functions',
+        '3. Check for multiple versions of React (`npm ls react` — should show only one)',
+        '4. Component names must start with an uppercase letter to be treated as components',
+      ].join('\n'),
     };
   }
 
-  // Pattern: React hook context errors (e.g. "useChart must be used within a <ChartContainer />")
+  // ─── Pattern: React hook context errors (e.g. "useChart must be used within <ChartContainer>") ───
   const hookContextMatch = content.match(/(?:Uncaught Error:\s*)?(\w+)\s+must be used within (?:a\s+)?<(\w+)/);
 
   if (hookContextMatch) {
@@ -205,7 +258,30 @@ function classifyError(error: AutoFixError): ClassifiedError {
     };
   }
 
-  // Pattern: "X is not defined" reference errors (e.g. missing imports/components)
+  // ─── Pattern: "Cannot read properties of undefined/null (reading 'X')" ───
+  const cannotReadMatch = content.match(
+    /Cannot read propert(?:y|ies) of (?:undefined|null)(?:\s*\(reading ['"](\w+)['"]\))?/i,
+  );
+
+  if (cannotReadMatch) {
+    const prop = cannotReadMatch[1];
+
+    return {
+      category: 'runtime',
+      fixInstructions: [
+        `**Root Cause**: Trying to access${prop ? ` \`.${prop}\`` : ' a property'} on \`undefined\` or \`null\`.`,
+        '',
+        '**Required Fix**:',
+        '1. Add a null/undefined check before accessing the property: `if (obj) { obj.prop }`',
+        '2. Use optional chaining: `obj?.prop` instead of `obj.prop`',
+        '3. Check the data flow — the variable may not be initialized yet (common with async data or `useState(undefined)`)',
+        '4. If this is from an API response, add a loading state and only render after data is available',
+        '5. If this is in a `.map()` or `.filter()`, ensure the array is initialized (default to `[]`)',
+      ].join('\n'),
+    };
+  }
+
+  // ─── Pattern: "X is not defined" reference errors ───
   const referenceErrorMatch = content.match(/(?:ReferenceError|Uncaught ReferenceError):\s*(\w+)\s+is not defined/);
 
   if (referenceErrorMatch) {
@@ -220,36 +296,165 @@ function classifyError(error: AutoFixError): ClassifiedError {
         `1. Add the missing import statement for \`${identifier}\` at the top of the file`,
         `2. If \`${identifier}\` is a component, import it from the correct path (e.g., \`import { ${identifier} } from '@/components/${identifier.toLowerCase()}'\`)`,
         `3. If \`${identifier}\` is a variable/function, ensure it's defined before use`,
+        `4. Check for typos in the variable name`,
       ].join('\n'),
     };
   }
 
-  // Pattern: TypeError
-  if (content.includes('TypeError') || content.includes('is not a function') || content.includes('is not defined')) {
+  // ─── Pattern: RangeError ───
+  if (content.includes('RangeError')) {
     return {
       category: 'runtime',
-      fixInstructions:
-        'Fix the runtime error. Check that all variables and functions are properly defined and imported.',
+      fixInstructions: [
+        '**Root Cause**: A value is outside its allowed range (e.g., infinite recursion, invalid array length).',
+        '',
+        '**Required Fix**:',
+        '1. If "Maximum call stack size exceeded" — check for infinite recursion in function calls or component rendering',
+        '2. If "Invalid array length" — ensure array sizes are non-negative integers',
+        '3. If "Invalid string length" — check string concatenation in loops',
+        '4. Add base cases to recursive functions',
+      ].join('\n'),
     };
   }
 
-  // Pattern: Type errors (TypeScript)
+  // ─── Pattern: SyntaxError / parse errors ───
+  if (content.includes('SyntaxError') || content.includes('Unexpected token') || content.includes('Parse error')) {
+    // Extract file path if available for better context
+    const fileMatch = content.match(/(?:in|at|file:)\s*([\w./\\-]+\.(?:tsx?|jsx?|css|json))/i);
+    const filePath = fileMatch?.[1];
+
+    return {
+      category: 'syntax',
+      sourceFile: filePath,
+      fixInstructions: [
+        `**Root Cause**: Syntax error${filePath ? ` in \`${filePath}\`` : ''}.`,
+        '',
+        '**Required Fix**:',
+        '1. Check for missing or extra brackets `{}`, `()`, `[]`',
+        '2. Check for missing semicolons or commas (especially in objects/arrays)',
+        '3. Check for unclosed string literals (quotes)',
+        '4. In JSX — ensure all tags are properly closed and nested',
+        '5. In JSX — use `className` not `class`, and `htmlFor` not `for`',
+        '6. Check for invalid characters copied from outside (curly quotes, em dashes)',
+      ].join('\n'),
+    };
+  }
+
+  // ─── Pattern: CSS / PostCSS / Tailwind errors ───
+  if (
+    content.includes('CssSyntaxError') ||
+    content.includes('[plugin:vite:css]') ||
+    content.includes('postcss') ||
+    content.match(/class.*does not exist/i)
+  ) {
+    return {
+      category: 'build',
+      fixInstructions: [
+        '**Root Cause**: CSS/PostCSS/Tailwind configuration or syntax error.',
+        '',
+        '**Required Fix**:',
+        '1. If a Tailwind class "does not exist" — check for typos or use only standard Tailwind utility classes',
+        '2. If PostCSS error — check `postcss.config.js` and ensure all PostCSS plugins are installed',
+        '3. If CSS syntax error — check for missing semicolons, unclosed brackets, or invalid property values',
+        '4. Ensure `tailwindcss` is in package.json dependencies and `tailwind.config.js` exists',
+      ].join('\n'),
+    };
+  }
+
+  // ─── Pattern: ENOENT / File not found ───
+  const enoentMatch = content.match(/ENOENT.*?no such file or directory.*?['"]?([^\s'"]+)['"]?/i);
+
+  if (enoentMatch) {
+    const missingPath = enoentMatch[1];
+
+    return {
+      category: 'build',
+      fixInstructions: [
+        `**Root Cause**: File or directory not found: \`${missingPath}\``,
+        '',
+        '**Required Fix**:',
+        `1. Create the missing file at \`${missingPath}\``,
+        '2. Or fix the path reference that points to this file',
+        '3. If this is a config file (tsconfig, postcss, tailwind), ensure it exists in the project root',
+      ].join('\n'),
+    };
+  }
+
+  // ─── Pattern: Generic TypeError (catch-all for uncaught TypeError patterns) ───
+  if (content.includes('TypeError') || content.includes('is not a function') || content.includes('is not defined')) {
+    const functionMatch = content.match(/(\w+)\s+is not a function/);
+
+    return {
+      category: 'runtime',
+      fixInstructions: [
+        `**Root Cause**: ${functionMatch ? `\`${functionMatch[1]}\` is not a function` : 'TypeError — a value was used in an unexpected way'}.`,
+        '',
+        '**Required Fix**:',
+        functionMatch
+          ? [
+              `1. Check that \`${functionMatch[1]}\` is correctly imported — it may be a default export imported as named, or vice versa`,
+              `2. Verify \`${functionMatch[1]}\` actually exists in the module you're importing from`,
+              '3. Check if you accidentally call the result of a non-function (e.g., `useState()()`)',
+            ].join('\n')
+          : [
+              '1. Check that all imported values exist and are the right type (function vs. value)',
+              '2. Use optional chaining for property access on potentially undefined values',
+              '3. Verify you are not calling `.map()` / `.filter()` on a non-array (initialize with `[]`)',
+            ].join('\n'),
+      ].join('\n'),
+    };
+  }
+
+  // ─── Pattern: TypeScript errors ───
   if (content.includes('TS2') || content.includes('Type ') || content.includes('type error')) {
     return {
       category: 'type',
-      fixInstructions: 'Fix the TypeScript type error. Ensure proper typing and interface compatibility.',
+      fixInstructions: [
+        '**Root Cause**: TypeScript type mismatch.',
+        '',
+        '**Required Fix**:',
+        '1. Read the error carefully — it names the expected type and the actual type',
+        '2. If "not assignable to type" — update the value to match the expected type, or update the type annotation',
+        '3. If "Property does not exist" — add the missing property to the interface or use optional access',
+        '4. If "Argument of type ... is not assignable" — check function parameter types match',
+        '5. Avoid using `any` — use proper types or `unknown` with type guards',
+      ].join('\n'),
+    };
+  }
+
+  // ─── Pattern: Build failures (generic catch-all) ───
+  if (content.match(/Build failed|error during build/i)) {
+    return {
+      category: 'build',
+      fixInstructions: [
+        '**Root Cause**: The build process failed.',
+        '',
+        '**Required Fix**:',
+        '1. Read the error output above carefully — the root cause is usually stated before "Build failed"',
+        '2. Common causes: missing imports, type errors, syntax errors, missing dependencies',
+        '3. Fix the root cause error first, then the build will succeed',
+      ].join('\n'),
     };
   }
 
   return {
     category: 'unknown',
-    fixInstructions: 'Please analyze and fix this error.',
+    fixInstructions: [
+      '**Root Cause**: Unrecognized error type.',
+      '',
+      '**Required Fix**:',
+      '1. Read the error output carefully and identify the root cause',
+      '2. If it mentions a file path, check that file for issues',
+      '3. If it mentions a module or package, ensure it is installed',
+      '4. If it is a runtime error, add proper error handling and null checks',
+    ].join('\n'),
   };
 }
 
 /**
  * Format an error for sending to the LLM via chat.
- * Includes intelligent error classification and targeted fix instructions.
+ * Includes intelligent error classification, recovery suggestions,
+ * targeted fix instructions, and escalation for repeated failures.
  */
 export function formatErrorForLLM(error: AutoFixError): AutoFixMessage {
   const status = getAutoFixStatus();
@@ -291,6 +496,14 @@ export function formatErrorForLLM(error: AutoFixError): AutoFixMessage {
   lines.push('---');
   lines.push(classified.fixInstructions);
 
+  // Add recovery suggestion from centralized errorConfig if available
+  const recoverySuggestion = getRecoverySuggestion(error.content);
+
+  if (recoverySuggestion) {
+    lines.push('');
+    lines.push(`**Additional Context**: ${recoverySuggestion}`);
+  }
+
   // Add history context if there were previous attempts
   if (historyContext) {
     lines.push('');
@@ -298,16 +511,39 @@ export function formatErrorForLLM(error: AutoFixError): AutoFixMessage {
     lines.push(historyContext);
   }
 
-  // Add escalation for repeated failures
+  // Add escalation for repeated failures — increasingly specific guidance
   if (status.currentAttempt >= 2) {
     lines.push('');
-    lines.push(
-      '**WARNING**: Previous fix attempts failed. Please carefully re-read the error and fix instructions above.',
-    );
+    lines.push('---');
+    lines.push('**WARNING**: Previous fix attempts failed. Try a DIFFERENT approach this time.');
+    lines.push('');
 
     if (classified.category === 'import-resolution' && classified.missingPackage) {
       lines.push(
         `Ensure \`${classified.missingPackage}\` is in package.json \`"dependencies"\` AND that \`npm install\` runs successfully.`,
+      );
+      lines.push('If the package cannot be installed, remove the import and implement the functionality without it.');
+    } else if (classified.category === 'runtime') {
+      lines.push('**Escalation Steps**:');
+      lines.push('1. Re-read the FULL error stack trace — the real cause may be in a different file than expected');
+      lines.push(
+        '2. If a component keeps failing, try simplifying it — remove complex logic and rebuild incrementally',
+      );
+      lines.push('3. Check if the error is caused by a missing dependency or wrong import — not just the code logic');
+    } else if (classified.category === 'syntax') {
+      lines.push('**Escalation Steps**:');
+      lines.push('1. Instead of patching, rewrite the problematic file section from scratch');
+      lines.push('2. Check for copy-paste artifacts (smart quotes, invisible characters, wrong line endings)');
+    } else {
+      lines.push('**Escalation Steps**:');
+      lines.push('1. Look at the error from a completely different angle — the root cause may not be obvious');
+      lines.push('2. Check ALL files mentioned in the error output, not just the first one');
+    }
+
+    if (status.currentAttempt >= 3) {
+      lines.push('');
+      lines.push(
+        '**FINAL ATTEMPT**: This is the last try. If the same approach keeps failing, use an entirely different implementation strategy.',
       );
     }
   }
