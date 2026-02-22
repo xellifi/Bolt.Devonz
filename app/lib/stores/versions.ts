@@ -315,7 +315,7 @@ class VersionsStore {
    */
   private async _tryCapture(): Promise<string | undefined> {
     const { requestPreviewScreenshot } = await import('~/components/workbench/Preview');
-    const screenshot = await requestPreviewScreenshot({ width: 320, height: 200 }, 5000);
+    const screenshot = await requestPreviewScreenshot({ width: 960, height: 600 }, 8000);
 
     return screenshot || undefined;
   }

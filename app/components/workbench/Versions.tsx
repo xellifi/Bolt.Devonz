@@ -115,14 +115,15 @@ const CommitCard = memo(
           }}
         >
           {/* Thumbnail — fills card height */}
-          <div className="flex-shrink-0 self-stretch" style={{ width: '80px' }}>
+          <div className="flex-shrink-0 self-stretch" style={{ width: '140px', minHeight: '80px' }}>
             {thumbnail ? (
               <img
                 src={thumbnail}
                 alt={`Preview for ${commit.shortSha}`}
-                className="rounded-md object-cover w-full h-full cursor-zoom-in"
+                className="rounded-md object-contain w-full h-full cursor-zoom-in"
                 style={{
                   border: '1px solid var(--devonz-elements-borderColor)',
+                  background: 'var(--devonz-elements-bg-depth-3)',
                 }}
                 onClick={(e) => {
                   e.stopPropagation();

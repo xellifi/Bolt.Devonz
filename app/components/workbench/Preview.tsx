@@ -72,7 +72,7 @@ let globalIframeRef: HTMLIFrameElement | null = null;
  */
 export function requestPreviewScreenshot(
   options: { width?: number; height?: number } = {},
-  timeout: number = 5000,
+  timeout: number = 8000,
 ): Promise<string> {
   return new Promise((resolve) => {
     const requestId = `screenshot-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
@@ -80,7 +80,7 @@ export function requestPreviewScreenshot(
     // Set up timeout fallback
     const timeoutId = setTimeout(() => {
       screenshotCallbacks.delete(requestId);
-      resolve(generateFallbackScreenshot(options.width || 320, options.height || 200));
+      resolve(generateFallbackScreenshot(options.width || 960, options.height || 600));
     }, timeout);
 
     // Set up callback
@@ -96,8 +96,8 @@ export function requestPreviewScreenshot(
           type: 'CAPTURE_SCREENSHOT_REQUEST',
           requestId,
           options: {
-            width: options.width || 320,
-            height: options.height || 200,
+            width: options.width || 960,
+            height: options.height || 600,
           },
         },
         '*',
@@ -105,7 +105,7 @@ export function requestPreviewScreenshot(
     } else {
       clearTimeout(timeoutId);
       screenshotCallbacks.delete(requestId);
-      resolve(generateFallbackScreenshot(options.width || 320, options.height || 200));
+      resolve(generateFallbackScreenshot(options.width || 960, options.height || 600));
     }
   });
 }
