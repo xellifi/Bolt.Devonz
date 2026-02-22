@@ -322,10 +322,12 @@ class VersionsStore {
 
   /**
    * Check whether a screenshot result is a real capture (not a fallback placeholder).
-   * Placeholder images are small PNGs (~2-4 KB). Real captures are larger JPEGs.
+   * Fallback placeholders are PNGs from generateFallbackScreenshot().
+   * Real captures are JPEGs from html2canvas in the preview iframe.
+   * Even simple apps produce JPEGs of at least ~500 chars.
    */
   private _isRealScreenshot(dataUrl: string): boolean {
-    return dataUrl.length > 6000 && dataUrl.startsWith('data:image/jpeg');
+    return dataUrl.length > 500 && dataUrl.startsWith('data:image/jpeg');
   }
 
   /**
