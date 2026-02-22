@@ -12,7 +12,6 @@ import * as Tooltip from '@radix-ui/react-tooltip';
 import styles from './BaseChat.module.scss';
 import { LeftActionPanel } from '~/components/chat/LeftActionPanel';
 import { TemplateSection } from '~/components/chat/TemplateSection';
-import { RecentChats } from '~/components/chat/RecentChats';
 import type { ProviderInfo } from '~/types/model';
 import type { ActionAlert, SupabaseAlert, DeployAlert, LlmErrorAlertType } from '~/types/actions';
 import type { ImportChatFn } from '~/lib/persistence/db';
@@ -555,8 +554,6 @@ export const BaseChat = React.memo(
                 </StickToBottom>
                 {/* Template Gallery - Below Example Prompts */}
                 {!chatStarted && <TemplateSection />}
-                {/* Recent Chats - Below Templates */}
-                {!chatStarted && <ClientOnly>{() => <RecentChats maxItems={10} />}</ClientOnly>}
               </div>
             )}
 
