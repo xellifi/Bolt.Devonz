@@ -553,33 +553,68 @@ export class LocalRuntime implements RuntimeProvider {
      */
     const cleaned = output.replace(/\x1b\[[0-9;]*m/g, '');
 
-    for (const pattern of PORT_PATTERNS) {
-      const match = cleaned.match(pattern);
+    /*
+     * Process line-by-line to prevent false positives from cross-line matches.
+     * For example, a tool may print "localhost:5173" on one line and
+     * "is in use" on the next — the negative lookaheads in PORT_PATTERNS
+     * wouldn't catch that if the whole chunk is matched as one string.
+     */
+    const lines = cleaned.split(/\r?\n/);
 
-      if (match?.[1]) {
-        const port = parseInt(match[1], 10);
+    for (const line of lines) {
+      /*
+       * Skip lines that indicate a port is NOT available / NOT a server announcement.
+       * This provides a robust first-pass filter regardless of regex lookaheads.
+       */
+      if (/\b(?:in use|already|occupied|EADDRINUSE|address already|taken)\b/i.test(line)) {
+        continue;
+      }
 
-        if (port > 0 && port < 65536 && !this.#detectedPorts.has(port)) {
-          this.#detectedPorts.add(port);
+      for (const pattern of PORT_PATTERNS) {
+        const match = line.match(pattern);
 
-          const event: PortEvent = {
-            port,
-            type: 'open',
-            url: `http://localhost:${port}`,
-          };
+        if (match?.[1]) {
+          const port = parseInt(match[1], 10);
 
-          logger.info(`Detected port open: ${port}`);
+          if (port > 0 && port < 65536 && !this.#detectedPorts.has(port) && !this.#isExcludedPort(port)) {
+            this.#detectedPorts.add(port);
 
-          for (const listener of this.#portListeners) {
-            try {
-              listener(event);
-            } catch (err) {
-              logger.error('Port event listener error:', err);
+            const event: PortEvent = {
+              port,
+              type: 'open',
+              url: `http://localhost:${port}`,
+            };
+
+            logger.info(`Detected port open: ${port}`);
+
+            for (const listener of this.#portListeners) {
+              try {
+                listener(event);
+              } catch (err) {
+                logger.error('Port event listener error:', err);
+              }
             }
           }
+
+          break; // Only match the first pattern per line
         }
       }
     }
+  }
+
+  /**
+   * Check if a port should be excluded from detection.
+   * The host app's own port (Devonz dev server) must not be treated as a
+   * project preview server.
+   */
+  #isExcludedPort(port: number): boolean {
+    /*
+     * The Devonz app runs on PORT env var (default 5173 in dev, set explicitly
+     * in Dockerfile). Exclude it so the preview iframe never shows the host app.
+     */
+    const hostPort = parseInt(process.env.PORT || '5173', 10);
+
+    return port === hostPort;
   }
 }
 

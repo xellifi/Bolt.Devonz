@@ -44,9 +44,85 @@ function setBackupMeta(meta: BackupMeta) {
 }
 
 /**
+ * Evict ALL existing backup entries from localStorage to free space.
+ * Returns the number of bytes freed (approximate).
+ */
+function evictAllBackups(): number {
+  const meta = getBackupMeta();
+  let freedBytes = 0;
+
+  if (meta?.backupKeys.length) {
+    for (const key of meta.backupKeys) {
+      const raw = localStorage.getItem(key);
+
+      if (raw) {
+        freedBytes += raw.length * 2; // UTF-16 ≈ 2 bytes per char
+      }
+
+      localStorage.removeItem(key);
+    }
+
+    meta.backupKeys = [];
+    setBackupMeta(meta);
+  }
+
+  return freedBytes;
+}
+
+/**
+ * Remove stale non-backup keys from localStorage that are no longer needed.
+ * Targets common ephemeral keys that accumulate over time.
+ */
+function cleanStaleLocalStorageKeys(): number {
+  const STALE_PREFIXES = ['bolt_', '__remix', 'debug_', 'draft_'];
+  let freedBytes = 0;
+
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+
+    if (!key) {
+      continue;
+    }
+
+    const isStale = STALE_PREFIXES.some((p) => key.startsWith(p));
+
+    if (isStale) {
+      const raw = localStorage.getItem(key);
+
+      if (raw) {
+        freedBytes += raw.length * 2;
+      }
+
+      localStorage.removeItem(key);
+    }
+  }
+
+  return freedBytes;
+}
+
+/**
+ * Try to write a value to localStorage. Returns true on success, false on QuotaExceededError.
+ */
+function trySetItem(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Create a full backup of recent chats, snapshots, and versions.
  * Stores in localStorage with rotation (keeps last MAX_BACKUPS).
- * Gracefully degrades: drops versions, then snapshots, if data exceeds localStorage limits.
+ *
+ * Gracefully degrades in multiple stages:
+ *   1. Full backup (chats + snapshots + versions without thumbnails)
+ *   2. Drop versions
+ *   3. Drop snapshots
+ *   4. Reduce to fewer chats (half)
+ *   5. Evict old backups + clean stale keys, then retry
+ *   6. Minimal backup (latest 3 chats, no snapshots/versions)
  */
 export async function createBackup(db: IDBDatabase): Promise<string | null> {
   try {
@@ -57,14 +133,14 @@ export async function createBackup(db: IDBDatabase): Promise<string | null> {
     }
 
     /* Only back up the most recent chats to keep the payload manageable */
-    const chats = allChats
-      .sort((a, b) => {
-        const ta = new Date(b.timestamp ?? 0).getTime();
-        const tb = new Date(a.timestamp ?? 0).getTime();
+    const sortedChats = allChats.sort((a, b) => {
+      const ta = new Date(b.timestamp ?? 0).getTime();
+      const tb = new Date(a.timestamp ?? 0).getTime();
 
-        return ta - tb;
-      })
-      .slice(0, MAX_BACKUP_CHATS);
+      return ta - tb;
+    });
+
+    const chats = sortedChats.slice(0, MAX_BACKUP_CHATS);
 
     const snapshots: Record<string, Snapshot> = {};
     const versions: Record<string, ProjectVersion[]> = {};
@@ -98,73 +174,86 @@ export async function createBackup(db: IDBDatabase): Promise<string | null> {
       chatCount: chats.length,
     };
 
-    /* Try full backup first, then degrade if too large */
+    /* ── Stage 1: Full backup ── */
     let backup: BackupData = { _meta: metaBlock, chats, snapshots, versions };
     let serialized = JSON.stringify(backup);
 
+    /* ── Stage 2: Drop versions ── */
     if (serialized.length > MAX_BACKUP_SIZE_BYTES) {
-      /* Drop versions (usually the largest part) */
       logger.debug('Backup too large with versions, dropping versions data');
       backup = { _meta: metaBlock, chats, snapshots, versions: {} };
       serialized = JSON.stringify(backup);
     }
 
+    /* ── Stage 3: Drop snapshots ── */
     if (serialized.length > MAX_BACKUP_SIZE_BYTES) {
-      /* Drop snapshots too — keep only chat messages */
       logger.debug('Backup still too large, dropping snapshots data');
       backup = { _meta: metaBlock, chats, snapshots: {}, versions: {} };
       serialized = JSON.stringify(backup);
     }
 
+    /* ── Stage 4: Reduce chat count ── */
+    if (serialized.length > MAX_BACKUP_SIZE_BYTES) {
+      const halfChats = chats.slice(0, Math.max(3, Math.floor(chats.length / 2)));
+      logger.debug(`Backup still too large, reducing to ${halfChats.length} chats`);
+
+      const reducedMeta = { ...metaBlock, chatCount: halfChats.length };
+      backup = { _meta: reducedMeta, chats: halfChats, snapshots: {}, versions: {} };
+      serialized = JSON.stringify(backup);
+    }
+
     const backupKey = `${BACKUP_KEY_PREFIX}${Date.now()}`;
 
-    try {
-      localStorage.setItem(backupKey, serialized);
-    } catch (e) {
-      // localStorage full -- evict oldest backups and retry
-      const meta = getBackupMeta();
-
-      if (meta?.backupKeys.length) {
-        const toRemove = meta.backupKeys.slice(0, Math.max(1, Math.floor(meta.backupKeys.length / 2)));
-
-        for (const key of toRemove) {
-          localStorage.removeItem(key);
-        }
-
-        meta.backupKeys = meta.backupKeys.filter((k) => !toRemove.includes(k));
-        setBackupMeta(meta);
-
-        try {
-          localStorage.setItem(backupKey, serialized);
-        } catch {
-          logger.error('Backup failed: localStorage full even after eviction');
-          return null;
-        }
-      } else {
-        logger.error('Backup failed: localStorage full', e);
-        return null;
-      }
+    /* ── Try writing to localStorage ── */
+    if (trySetItem(backupKey, serialized)) {
+      return finalizeBackup(backupKey, chats.length, Object.keys(snapshots).length);
     }
 
-    // Update metadata and rotate old backups
-    const meta = getBackupMeta() || { lastBackupTime: '', backupKeys: [], chatCount: 0 };
-    meta.backupKeys.push(backupKey);
-    meta.lastBackupTime = new Date().toISOString();
-    meta.chatCount = chats.length;
+    /* ── Stage 5: Evict old backups + clean stale keys, then retry ── */
+    logger.debug('localStorage full — evicting old backups and cleaning stale keys');
+    evictAllBackups();
+    cleanStaleLocalStorageKeys();
 
-    while (meta.backupKeys.length > MAX_BACKUPS) {
-      const oldest = meta.backupKeys.shift()!;
-      localStorage.removeItem(oldest);
+    if (trySetItem(backupKey, serialized)) {
+      return finalizeBackup(backupKey, chats.length, Object.keys(snapshots).length);
     }
 
-    setBackupMeta(meta);
-    logger.info(`Backup created: ${chats.length} chats, ${Object.keys(snapshots).length} snapshots`);
+    /* ── Stage 6: Minimal backup (latest 3 chats, messages only) ── */
+    const minChats = sortedChats.slice(0, 3);
+    const minMeta = { ...metaBlock, chatCount: minChats.length };
+    const minBackup: BackupData = { _meta: minMeta, chats: minChats, snapshots: {}, versions: {} };
+    serialized = JSON.stringify(minBackup);
 
-    return backupKey;
+    if (trySetItem(backupKey, serialized)) {
+      logger.warn(`Backup degraded to ${minChats.length} chats (localStorage nearly full)`);
+      return finalizeBackup(backupKey, minChats.length, 0);
+    }
+
+    logger.error('Backup failed: localStorage full even after full eviction and degradation');
+
+    return null;
   } catch (error) {
     logger.error('Backup failed:', error);
     return null;
   }
+}
+
+/** Finalize a successful backup: update metadata, rotate old entries, and log. */
+function finalizeBackup(backupKey: string, chatCount: number, snapshotCount: number): string {
+  const meta = getBackupMeta() || { lastBackupTime: '', backupKeys: [], chatCount: 0 };
+  meta.backupKeys.push(backupKey);
+  meta.lastBackupTime = new Date().toISOString();
+  meta.chatCount = chatCount;
+
+  while (meta.backupKeys.length > MAX_BACKUPS) {
+    const oldest = meta.backupKeys.shift()!;
+    localStorage.removeItem(oldest);
+  }
+
+  setBackupMeta(meta);
+  logger.info(`Backup created: ${chatCount} chats, ${snapshotCount} snapshots`);
+
+  return backupKey;
 }
 
 /**
