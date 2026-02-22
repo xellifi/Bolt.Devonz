@@ -188,7 +188,7 @@ Watchtower polls GHCR every 5 minutes and automatically restarts the container w
 
 | Store | Purpose |
 | ----- | ------- |
-| `stores/gitlabConnection.ts` | Auth token, instance URL, user info |
+| `stores/gitlab.ts` | Auth token, instance URL, user info |
 
 ---
 

@@ -25,7 +25,7 @@ vi.mock('~/utils/debugLogger', () => ({
   captureTerminalLog: vi.fn(),
 }));
 
-vi.mock('~/lib/stores/qrCodeStore', () => ({
+vi.mock('~/lib/stores/qrCode', () => ({
   expoUrlAtom: { set: vi.fn(), get: vi.fn(() => '') },
 }));
 
@@ -655,7 +655,7 @@ describe('DevonzShell', () => {
 
   describe('Expo URL detection', () => {
     it('should detect Expo URLs in output and set the atom', async () => {
-      const { expoUrlAtom } = await import('~/lib/stores/qrCodeStore');
+      const { expoUrlAtom } = await import('~/lib/stores/qrCode');
       const { onDataCb } = await initDevonzShell(shell);
 
       onDataCb('Metro bundling complete. exp://192.168.1.5:19000 ready');

@@ -21,7 +21,7 @@ import type { ModelInfo } from '~/lib/modules/llm/types';
 import ProgressCompilation from './ProgressCompilation';
 import type { ProgressAnnotation } from '~/types/context';
 import { SupabaseChatAlert } from '~/components/chat/SupabaseAlert';
-import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
+import { expoUrlAtom } from '~/lib/stores/qrCode';
 
 import { workbenchStore } from '~/lib/stores/workbench';
 import { useStore } from '@nanostores/react';

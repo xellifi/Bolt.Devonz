@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Dialog, DialogTitle, DialogDescription, DialogRoot } from '~/components/ui/Dialog';
 import { useStore } from '@nanostores/react';
-import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
+import { expoUrlAtom } from '~/lib/stores/qrCode';
 
 const QrCode = lazy(() => import('react-qrcode-logo').then((mod) => ({ default: mod.QRCode })));
 
