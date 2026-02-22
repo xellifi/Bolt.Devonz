@@ -119,7 +119,7 @@ const NotificationsTab = () => {
       default:
         return {
           icon: 'i-ph:bell',
-          color: 'text-gray-500 dark:text-gray-400',
+          color: 'text-devonz-elements-textTertiary',
           bg: 'hover:bg-gray-500/10 dark:hover:bg-gray-500/20',
         };
     }
@@ -129,7 +129,7 @@ const NotificationsTab = () => {
     if (details.type === 'update') {
       return (
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-gray-600 dark:text-gray-400">{details.message}</p>
+          <p className="text-sm text-devonz-elements-textSecondary">{details.message}</p>
           <div className="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-500">
             <p>Current Version: {details.currentVersion}</p>
             <p>Latest Version: {details.latestVersion}</p>
@@ -143,7 +143,7 @@ const NotificationsTab = () => {
               'text-sm font-medium',
               'bg-transparent',
               'border border-devonz-elements-borderColor',
-              'text-gray-900 dark:text-white',
+              'text-devonz-elements-textPrimary',
               'hover:bg-devonz-elements-item-backgroundAccent',
               'transition-all duration-200',
             )}
@@ -155,12 +155,12 @@ const NotificationsTab = () => {
       );
     }
 
-    return details.message ? <p className="text-sm text-gray-600 dark:text-gray-400">{details.message}</p> : null;
+    return details.message ? <p className="text-sm text-devonz-elements-textSecondary">{details.message}</p> : null;
   };
 
   const filterOptions: { id: FilterType; label: string; icon: string; color: string }[] = [
     { id: 'all', label: 'All Notifications', icon: 'i-ph:bell', color: '#06B6D4' },
-    { id: 'system', label: 'System', icon: 'i-ph:gear', color: '#6b7280' },
+    { id: 'system', label: 'System', icon: 'i-ph:gear', color: 'var(--devonz-elements-textTertiary)' },
     { id: 'update', label: 'Updates', icon: 'i-ph:arrow-circle-up', color: '#06B6D4' },
     { id: 'error', label: 'Errors', icon: 'i-ph:warning-circle', color: '#ef4444' },
     { id: 'warning', label: 'Warnings', icon: 'i-ph:warning', color: '#f59e0b' },
@@ -178,7 +178,7 @@ const NotificationsTab = () => {
               className={classNames(
                 'flex items-center gap-2',
                 'rounded-lg px-3 py-1.5',
-                'text-sm text-gray-900 dark:text-white',
+                'text-sm text-devonz-elements-textPrimary',
                 'bg-transparent',
                 'border border-devonz-elements-borderColor',
                 'hover:bg-devonz-elements-item-backgroundAccent',
@@ -190,14 +190,14 @@ const NotificationsTab = () => {
                 style={{ color: filterOptions.find((opt) => opt.id === filter)?.color }}
               />
               {filterOptions.find((opt) => opt.id === filter)?.label || 'Filter Notifications'}
-              <span className="i-ph:caret-down text-lg text-gray-500 dark:text-gray-400" />
+              <span className="i-ph:caret-down text-lg text-devonz-elements-textTertiary" />
             </button>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Portal>
             <DropdownMenu.Content
               className="min-w-[200px] rounded-lg shadow-lg py-1 z-[250] animate-in fade-in-0 zoom-in-95 border border-devonz-elements-borderColor"
-              style={{ backgroundColor: '#0f1219' }}
+              style={{ backgroundColor: 'var(--devonz-elements-bg-depth-1)' }}
               sideOffset={5}
               align="start"
               side="bottom"
@@ -231,14 +231,14 @@ const NotificationsTab = () => {
           className={classNames(
             'group flex items-center gap-2',
             'rounded-lg px-3 py-1.5',
-            'text-sm text-gray-900 dark:text-white',
+            'text-sm text-devonz-elements-textPrimary',
             'bg-transparent',
             'border border-devonz-elements-borderColor',
             'hover:bg-devonz-elements-item-backgroundAccent',
             'transition-all duration-200',
           )}
         >
-          <span className="i-ph:trash text-lg text-gray-500 dark:text-gray-400 group-hover:text-devonz-elements-item-contentAccent transition-colors" />
+          <span className="i-ph:trash text-lg text-devonz-elements-textTertiary group-hover:text-devonz-elements-item-contentAccent transition-colors" />
           Clear All
         </button>
       </div>
@@ -257,8 +257,8 @@ const NotificationsTab = () => {
           >
             <span className="i-ph:bell-slash text-4xl text-gray-400 dark:text-gray-600" />
             <div className="flex flex-col gap-1">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white">No Notifications</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">You're all caught up!</p>
+              <h3 className="text-sm font-medium text-devonz-elements-textPrimary">No Notifications</h3>
+              <p className="text-sm text-devonz-elements-textTertiary">You're all caught up!</p>
             </div>
           </motion.div>
         ) : (
@@ -282,15 +282,15 @@ const NotificationsTab = () => {
                   <div className="flex items-start gap-3">
                     <span className={classNames('text-lg', style.icon, style.color)} />
                     <div className="flex flex-col gap-1">
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">{log.message}</h3>
+                      <h3 className="text-sm font-medium text-devonz-elements-textPrimary">{log.message}</h3>
                       {log.details && renderNotificationDetails(log.details as NotificationDetails)}
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-devonz-elements-textTertiary">
                         Category: {log.category}
                         {log.subCategory ? ` > ${log.subCategory}` : ''}
                       </p>
                     </div>
                   </div>
-                  <time className="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                  <time className="shrink-0 text-xs text-devonz-elements-textTertiary">
                     {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
                   </time>
                 </div>

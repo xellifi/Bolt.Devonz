@@ -7,7 +7,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(({ className, style, ...props
   return (
     <div
       ref={ref}
-      className={classNames('rounded-lg border text-white shadow-sm', className)}
+      className={classNames('rounded-lg border text-devonz-elements-textPrimary shadow-sm', className)}
       style={{
         backgroundColor: 'var(--devonz-elements-bg-depth-1)',
         borderColor: 'var(--devonz-elements-borderColor)',

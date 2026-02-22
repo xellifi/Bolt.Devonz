@@ -68,7 +68,7 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
             size="lg"
             className={classNames(
               'gap-2',
-              'text-gray-300 hover:text-white',
+              'text-devonz-elements-textSecondary hover:text-devonz-elements-textPrimary',
               'border border-devonz-elements-borderColor hover:border-purple-500/50',
               'h-10 px-4 py-2 min-w-[120px] justify-center',
               'transition-all duration-200 ease-in-out',
@@ -83,7 +83,7 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
             importChat={importChat}
             className={classNames(
               'gap-2',
-              'text-gray-300 hover:text-white',
+              'text-devonz-elements-textSecondary hover:text-devonz-elements-textPrimary',
               'border border-devonz-elements-borderColor hover:border-purple-500/50',
               'h-10 px-4 py-2 min-w-[120px] justify-center',
               'transition-all duration-200 ease-in-out rounded-lg',

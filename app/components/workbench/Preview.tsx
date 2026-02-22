@@ -1413,10 +1413,10 @@ Add these rules to style the elements as specified. The !important flags ensure 
             {isWindowSizeDropdownOpen && (
               <>
                 <div className="fixed inset-0 z-50" onClick={() => setIsWindowSizeDropdownOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 z-50 min-w-[240px] max-h-[400px] overflow-y-auto bg-white dark:bg-black rounded-xl shadow-2xl border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.1)] overflow-hidden">
-                  <div className="p-3 border-b border-[#E5E7EB] dark:border-[rgba(255,255,255,0.1)]">
+                <div className="absolute right-0 top-full mt-2 z-50 min-w-[240px] max-h-[400px] overflow-y-auto bg-devonz-elements-bg-depth-1 rounded-xl shadow-2xl border border-devonz-elements-borderColor overflow-hidden">
+                  <div className="p-3 border-b border-devonz-elements-borderColor">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-[#111827] dark:text-gray-300">Window Options</span>
+                      <span className="text-sm font-medium text-devonz-elements-textPrimary">Window Options</span>
                     </div>
                     <div className="flex flex-col gap-2">
                       <button
@@ -1503,7 +1503,7 @@ Add these rules to style the elements as specified. The !important flags ensure 
                   {WINDOW_SIZES.map((size) => (
                     <button
                       key={size.name}
-                      className="w-full px-4 py-3.5 text-left text-[#111827] dark:text-gray-300 text-sm whitespace-nowrap flex items-center gap-3 group hover:bg-[#F5EEFF] dark:hover:bg-gray-900 bg-white dark:bg-black"
+                      className="w-full px-4 py-3.5 text-left text-devonz-elements-textPrimary text-sm whitespace-nowrap flex items-center gap-3 group hover:bg-devonz-elements-bg-depth-3 bg-devonz-elements-bg-depth-1"
                       onClick={() => {
                         setSelectedWindowSize(size);
                         setIsWindowSizeDropdownOpen(false);
@@ -1511,13 +1511,13 @@ Add these rules to style the elements as specified. The !important flags ensure 
                       }}
                     >
                       <div
-                        className={`${size.icon} w-5 h-5 text-[#6B7280] dark:text-gray-400 group-hover:text-[#6D28D9] dark:group-hover:text-[#6D28D9] transition-colors duration-200`}
+                        className={`${size.icon} w-5 h-5 text-devonz-elements-textTertiary group-hover:text-[#6D28D9] dark:group-hover:text-[#6D28D9] transition-colors duration-200`}
                       />
                       <div className="flex-grow flex flex-col">
                         <span className="font-medium group-hover:text-[#6D28D9] dark:group-hover:text-[#6D28D9] transition-colors duration-200">
                           {size.name}
                         </span>
-                        <span className="text-xs text-[#6B7280] dark:text-gray-400 group-hover:text-[#6D28D9] dark:group-hover:text-[#6D28D9] transition-colors duration-200">
+                        <span className="text-xs text-devonz-elements-textTertiary group-hover:text-[#6D28D9] dark:group-hover:text-[#6D28D9] transition-colors duration-200">
                           {isLandscape && (size.frameType === 'mobile' || size.frameType === 'tablet')
                             ? `${size.height} × ${size.width}`
                             : `${size.width} × ${size.height}`}

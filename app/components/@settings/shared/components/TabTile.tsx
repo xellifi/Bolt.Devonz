@@ -45,18 +45,20 @@ export const TabTile = memo(
                       'w-14 h-14',
                       'flex items-center justify-center',
                       'rounded-xl',
-                      'bg-gray-100 dark:bg-gray-800',
+                      'bg-devonz-elements-bg-depth-2',
                       'ring-1 ring-gray-200 dark:ring-gray-700',
                       'group-hover:bg-devonz-elements-item-backgroundAccent',
                       'group-hover:ring-devonz-elements-borderColorActive/30',
                       'transition-colors duration-150',
-                      isActive ? 'bg-devonz-elements-item-backgroundAccent ring-devonz-elements-borderColorActive/30' : '',
+                      isActive
+                        ? 'bg-devonz-elements-item-backgroundAccent ring-devonz-elements-borderColorActive/30'
+                        : '',
                     )}
                   >
                     <IconComponent
                       className={classNames(
                         'w-8 h-8',
-                        'text-gray-600 dark:text-gray-300',
+                        'text-devonz-elements-textSecondary',
                         'group-hover:text-devonz-elements-item-contentAccent',
                         'transition-colors duration-150',
                         isActive ? 'text-devonz-elements-item-contentAccent' : '',
@@ -69,7 +71,7 @@ export const TabTile = memo(
                     <h3
                       className={classNames(
                         'text-[15px] font-medium leading-snug mb-2',
-                        'text-gray-700 dark:text-gray-200',
+                        'text-devonz-elements-textPrimary',
                         'group-hover:text-devonz-elements-item-contentAccent',
                         'transition-colors duration-150',
                         isActive ? 'text-devonz-elements-item-contentAccent' : '',
@@ -81,7 +83,7 @@ export const TabTile = memo(
                       <p
                         className={classNames(
                           'text-[13px] leading-relaxed',
-                          'text-gray-500 dark:text-gray-400',
+                          'text-devonz-elements-textTertiary',
                           'max-w-[85%]',
                           'text-center',
                           'group-hover:text-devonz-elements-item-contentAccent',
@@ -102,7 +104,7 @@ export const TabTile = memo(
                         <Tooltip.Content
                           className={classNames(
                             'px-3 py-1.5 rounded-lg',
-                            'bg-[#18181B] text-white',
+                            'bg-devonz-elements-bg-depth-3 text-devonz-elements-textPrimary',
                             'text-sm font-medium',
                             'select-none',
                             'z-[100]',

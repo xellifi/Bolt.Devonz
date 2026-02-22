@@ -29,7 +29,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
               decoding="sync"
             />
           ) : (
-            <div className="w-full h-full rounded-full flex items-center justify-center bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500">
+            <div className="w-full h-full rounded-full flex items-center justify-center bg-white dark:bg-gray-800 text-devonz-elements-textTertiary">
               <div className="i-ph:user w-6 h-6" />
             </div>
           )}
@@ -40,7 +40,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
         <DropdownMenu.Content
           className={classNames(
             'min-w-[240px] z-[250]',
-            'bg-white dark:bg-[#131a24]',
+            'bg-devonz-elements-bg-depth-2',
             'rounded-lg shadow-lg',
             'border border-gray-200/50 dark:border-gray-800/50',
             'animate-in fade-in-0 zoom-in-95',
@@ -65,16 +65,16 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
                   decoding="sync"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 font-medium text-lg">
+                <div className="w-full h-full flex items-center justify-center text-devonz-elements-textTertiary font-medium text-lg">
                   <div className="i-ph:user w-6 h-6" />
                 </div>
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm text-gray-900 dark:text-white truncate">
+              <div className="font-medium text-sm text-devonz-elements-textPrimary truncate">
                 {profile?.username || 'Guest User'}
               </div>
-              {profile?.bio && <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{profile.bio}</div>}
+              {profile?.bio && <div className="text-xs text-devonz-elements-textTertiary truncate">{profile.bio}</div>}
             </div>
           </div>
 
@@ -90,7 +90,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             )}
             onClick={() => onSelectTab('profile')}
           >
-            <div className="i-ph:user-circle w-4 h-4 text-gray-400 group-hover:text-devonz-elements-item-contentAccent transition-colors" />
+            <div className="i-ph:user-circle w-4 h-4 text-devonz-elements-textTertiary group-hover:text-devonz-elements-item-contentAccent transition-colors" />
             Edit Profile
           </DropdownMenu.Item>
 
@@ -106,7 +106,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             )}
             onClick={() => onSelectTab('settings')}
           >
-            <div className="i-ph:gear-six w-4 h-4 text-gray-400 group-hover:text-devonz-elements-item-contentAccent transition-colors" />
+            <div className="i-ph:gear-six w-4 h-4 text-devonz-elements-textTertiary group-hover:text-devonz-elements-item-contentAccent transition-colors" />
             Settings
           </DropdownMenu.Item>
 
@@ -130,7 +130,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
               )
             }
           >
-            <div className="i-ph:bug w-4 h-4 text-gray-400 group-hover:text-devonz-elements-item-contentAccent transition-colors" />
+            <div className="i-ph:bug w-4 h-4 text-devonz-elements-textTertiary group-hover:text-devonz-elements-item-contentAccent transition-colors" />
             Report Bug
           </DropdownMenu.Item>
         </DropdownMenu.Content>

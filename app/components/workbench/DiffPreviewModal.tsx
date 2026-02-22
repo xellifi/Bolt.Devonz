@@ -131,7 +131,7 @@ function getChangeTypeColor(type: StagedChange['type']): string {
     case 'delete':
       return 'bg-red-500/20 text-red-400 border-red-500/30';
     default:
-      return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      return 'bg-gray-500/20 text-devonz-elements-textTertiary border-gray-500/30';
   }
 }
 

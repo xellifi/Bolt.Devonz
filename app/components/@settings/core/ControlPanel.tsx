@@ -223,12 +223,12 @@ export const ControlPanel = ({ open, onClose, initialTab }: ControlPanelProps) =
             aria-describedby={undefined}
             onEscapeKeyDown={handleClose}
             className="dark relative z-[101] w-[1000px] h-[80vh] rounded-xl shadow-2xl border border-devonz-elements-borderColor flex overflow-hidden"
-            style={{ backgroundColor: '#0f1219' }}
+            style={{ backgroundColor: 'var(--devonz-elements-bg-depth-1)' }}
           >
             {/* Sidebar */}
             <div
               className="w-52 border-r border-devonz-elements-borderColor flex flex-col"
-              style={{ backgroundColor: '#0b0d13' }}
+              style={{ backgroundColor: 'var(--devonz-elements-bg-depth-1)' }}
             >
               {/* Header */}
               <div className="px-4 py-4 border-b border-devonz-elements-borderColor">
@@ -276,7 +276,7 @@ export const ControlPanel = ({ open, onClose, initialTab }: ControlPanelProps) =
                               : 'text-devonz-elements-textSecondary hover:text-devonz-elements-textPrimary border-l-2 border-transparent',
                           )}
                           style={{
-                            backgroundColor: isActive ? '#1a1f2e' : 'transparent',
+                            backgroundColor: isActive ? 'var(--devonz-elements-bg-depth-3)' : 'transparent',
                             paddingLeft: isActive ? '14px' : '16px',
                           }}
                         >
@@ -299,7 +299,10 @@ export const ControlPanel = ({ open, onClose, initialTab }: ControlPanelProps) =
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex flex-col min-w-0" style={{ backgroundColor: '#0f1219' }}>
+            <div
+              className="flex-1 flex flex-col min-w-0"
+              style={{ backgroundColor: 'var(--devonz-elements-bg-depth-1)' }}
+            >
               {/* Content Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-devonz-elements-borderColor">
                 <DialogTitle className="text-sm font-semibold text-devonz-elements-textPrimary">
@@ -309,7 +312,7 @@ export const ControlPanel = ({ open, onClose, initialTab }: ControlPanelProps) =
                   onClick={handleClose}
                   aria-label="Close settings"
                   className="p-1.5 rounded transition-colors hover:bg-devonz-elements-bg-depth-4"
-                  style={{ backgroundColor: '#1a1f2e' }}
+                  style={{ backgroundColor: 'var(--devonz-elements-bg-depth-3)' }}
                 >
                   <div className="i-ph:x w-4 h-4 text-devonz-elements-textSecondary" />
                 </button>
@@ -328,7 +331,9 @@ export const ControlPanel = ({ open, onClose, initialTab }: ControlPanelProps) =
                   <div className="flex flex-col items-center justify-center h-full gap-6">
                     <div className="i-ph:gear w-12 h-12 text-devonz-elements-textTertiary" />
                     <div className="text-center">
-                      <p className="text-sm text-devonz-elements-textSecondary mb-1">Select a setting from the sidebar</p>
+                      <p className="text-sm text-devonz-elements-textSecondary mb-1">
+                        Select a setting from the sidebar
+                      </p>
                       <p className="text-xs text-devonz-elements-textTertiary">
                         Configure providers, services, and preferences
                       </p>
@@ -343,7 +348,7 @@ export const ControlPanel = ({ open, onClose, initialTab }: ControlPanelProps) =
                               key={tabId}
                               onClick={() => handleTabClick(tabId)}
                               className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-devonz-elements-textSecondary transition-colors hover:text-devonz-elements-textPrimary"
-                              style={{ backgroundColor: '#1a1f2e' }}
+                              style={{ backgroundColor: 'var(--devonz-elements-bg-depth-3)' }}
                             >
                               <IconComponent className="w-3.5 h-3.5" />
                               {TAB_LABELS[tabId]}

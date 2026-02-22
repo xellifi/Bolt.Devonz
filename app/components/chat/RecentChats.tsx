@@ -93,12 +93,12 @@ export const RecentChats: React.FC<RecentChatsProps> = ({ maxItems = 10 }) => {
       <div
         className={classNames(
           'rounded-xl overflow-hidden',
-          'border border-[#3d5a7f]/30',
+          'border border-devonz-elements-borderColor/30',
           'bg-gradient-to-b from-devonz-elements-bg-depth-2 to-devonz-elements-bg-depth-1',
         )}
       >
         {/* Table Header */}
-        <div className="grid grid-cols-[1fr_auto] gap-4 px-4 py-3 border-b border-[#3d5a7f]/20 bg-[#1e3a5f]/10">
+        <div className="grid grid-cols-[1fr_auto] gap-4 px-4 py-3 border-b border-devonz-elements-borderColor/20 bg-devonz-elements-bg-depth-3/10">
           <div className="text-xs font-medium text-[#6b8bb8] uppercase tracking-wider">Task</div>
           <div className="text-xs font-medium text-[#6b8bb8] uppercase tracking-wider text-right">Last Modified</div>
         </div>
@@ -112,7 +112,7 @@ export const RecentChats: React.FC<RecentChatsProps> = ({ maxItems = 10 }) => {
               className={classNames(
                 'grid grid-cols-[1fr_auto] gap-4 px-4 py-3',
                 'cursor-pointer transition-all duration-200',
-                'hover:bg-[#1e3a5f]/20',
+                'hover:bg-devonz-elements-bg-depth-3/20',
                 'group',
               )}
             >

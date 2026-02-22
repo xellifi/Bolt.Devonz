@@ -59,7 +59,7 @@ export function LeftActionPanel({ importChat }: LeftActionPanelProps) {
 
   const buttonBaseClass = classNames(
     '!flex w-full items-center gap-2 justify-center',
-    'text-gray-300 hover:text-white',
+    'text-devonz-elements-textSecondary hover:text-devonz-elements-textPrimary',
     'border border-devonz-elements-borderColor hover:border-devonz-elements-borderColorActive',
     'h-10 px-4 py-2',
     'transition-all duration-200 ease-in-out',
@@ -69,9 +69,9 @@ export function LeftActionPanel({ importChat }: LeftActionPanelProps) {
 
   const primaryButtonClass = classNames(
     '!flex w-full items-center gap-2 justify-center',
-    'text-white',
+    'text-devonz-elements-textPrimary',
     'bg-gradient-to-r from-[#1e3a5f] to-[#2d4a6f]',
-    'border border-[#3d5a7f] hover:border-[#4d6a8f]',
+    'border border-devonz-elements-borderColor hover:border-devonz-elements-borderColorActive',
     'h-10 px-4 py-2',
     'transition-all duration-200 ease-in-out',
     'rounded-lg text-sm font-medium',
