@@ -12,7 +12,11 @@ export const TemplateSection: React.FC = () => {
   useEffect(() => {
     loadShowcaseTemplates()
       .then((data) => {
-        setTemplates(data.slice(0, 4));
+        /* Prefer templates that have screenshots (those with a vercelUrl). */
+        const withUrl = data.filter((t) => t.vercelUrl?.trim());
+        const withoutUrl = data.filter((t) => !t.vercelUrl?.trim());
+
+        setTemplates([...withUrl, ...withoutUrl].slice(0, 8));
       })
       .catch(() => {
         setTemplates([]);
@@ -44,13 +48,20 @@ export const TemplateSection: React.FC = () => {
         <h3 className="text-sm font-medium text-[#9ca3af]">Templates</h3>
         <button
           onClick={() => navigate('/templates')}
-          className="text-xs text-[#9ca3af] hover:text-white transition-colors duration-200 flex items-center gap-1 group"
+          className="text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-200 flex items-center gap-1.5 group border border-[#333333] hover:border-[#555555] hover:bg-[#2a2a2a]"
+          style={{ color: '#9ca3af', backgroundColor: '#1a1a1a' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#9ca3af';
+          }}
         >
           View all
           <div className="i-ph:arrow-right text-xs transition-transform duration-200 group-hover:translate-x-0.5" />
         </button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {templates.map((template) => (
           <TemplateCard key={template.id} template={template} onClick={handleTemplateClick} />
         ))}
