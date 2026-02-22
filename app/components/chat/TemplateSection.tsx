@@ -50,7 +50,7 @@ export const TemplateSection: React.FC = () => {
           <div className="i-ph:arrow-right text-xs transition-transform duration-200 group-hover:translate-x-0.5" />
         </button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {templates.map((template) => (
           <TemplateCard key={template.id} template={template} onClick={handleTemplateClick} />
         ))}
