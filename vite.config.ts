@@ -1,6 +1,7 @@
 import { vitePlugin as remixVitePlugin } from '@remix-run/dev';
 import { visualizer } from 'rollup-plugin-visualizer';
 import UnoCSS from 'unocss/vite';
+import type { PluginOption } from 'vite';
 import { defineConfig } from 'vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { optimizeCssModules } from 'vite-plugin-optimize-css-modules';
@@ -94,14 +95,15 @@ export default defineConfig((config) => {
       !isTest && UnoCSS(),
       tsconfigPaths(),
       config.mode === 'production' && optimizeCssModules({ apply: 'build' }),
-      process.env.ANALYZE &&
-        visualizer({
-          filename: 'stats.html',
-          open: true,
-          gzipSize: true,
-          brotliSize: true,
-        }),
-    ].filter(Boolean),
+      process.env.ANALYZE
+        ? visualizer({
+            filename: 'stats.html',
+            open: true,
+            gzipSize: true,
+            brotliSize: true,
+          })
+        : false,
+    ].filter(Boolean) as PluginOption[],
     envPrefix: [
       'VITE_',
       'OPENAI_LIKE_API_BASE_URL',
